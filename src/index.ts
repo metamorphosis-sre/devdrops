@@ -84,7 +84,7 @@ app.use("/api/*", async (c, next) => {
 // Transaction logging (runs after payment middleware)
 app.use("/api/*", transactionLogger);
 
-// Mount all 24 product routers
+// Mount all 22 product routers
 // Group A: Free APIs
 app.route("/api/fx", fx);
 app.route("/api/history", history);
@@ -130,7 +130,7 @@ const LANDING_HTML = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DevDrops — x402 Data APIs for the Agent Economy</title>
-<meta name="description" content="25 pay-per-query data APIs powered by x402 micropayments. Property intelligence, prediction markets, sports odds, regulatory feeds, weather, FX, and more. No API keys. No subscriptions. Just USDC.">
+<meta name="description" content="22 pay-per-query data APIs powered by x402 micropayments. Property intelligence, prediction markets, sports odds, regulatory feeds, weather, FX, and more. No API keys. No subscriptions. Just USDC.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -149,36 +149,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 
-/* Grain overlay */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.03;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");z-index:9999}
 
 .container{max-width:900px;margin:0 auto;padding:0 24px}
 
-/* Header */
 header{padding:20px 0;border-bottom:1px solid var(--border)}
-.header-inner{display:flex;justify-content:space-between;align-items:center}
+.header-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
 .logo{font-size:15px;font-weight:700;letter-spacing:-.5px;color:var(--text)}
 .logo span{color:var(--accent)}
+.header-links{display:flex;gap:16px;align-items:center}
+.header-links a{font-size:12px;color:var(--text3)}
+.header-links a:hover{color:var(--text)}
 .header-tag{font-size:11px;color:var(--text3);border:1px solid var(--border);padding:3px 10px;border-radius:20px}
 
-/* Hero */
 .hero{padding:80px 0 60px;border-bottom:1px solid var(--border)}
 .hero h1{font-family:var(--serif);font-size:clamp(40px,6vw,64px);font-weight:400;line-height:1.1;letter-spacing:-.02em;color:var(--text);margin-bottom:20px}
 .hero h1 em{font-style:italic;color:var(--accent)}
 .hero-sub{font-size:15px;color:var(--text2);max-width:560px;line-height:1.7;margin-bottom:32px}
-.hero-code{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;font-size:13px;color:var(--text2);overflow-x:auto;position:relative}
+.hero-code{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;font-size:13px;color:var(--text2);overflow-x:auto}
 .hero-code .comment{color:var(--text3)}
 .hero-code .kw{color:var(--accent)}
 .hero-code .str{color:var(--amber)}
 .hero-code .num{color:var(--coral)}
 
-/* Stats strip */
 .stats{display:flex;gap:40px;padding:32px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .stat{display:flex;flex-direction:column;gap:2px}
 .stat-val{font-size:20px;font-weight:700;color:var(--text)}
 .stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
 
-/* Products */
 .products{padding:60px 0}
 .section-label{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
 .section-title{font-family:var(--serif);font-size:28px;font-weight:400;margin-bottom:8px}
@@ -202,7 +200,6 @@ header{padding:20px 0;border-bottom:1px solid var(--border)}
 .tag-premium{background:rgba(168,85,247,.1);color:var(--purple)}
 .tag-free{background:rgba(34,197,94,.08);color:var(--accent)}
 
-/* How it works */
 .how{padding:60px 0;border-top:1px solid var(--border)}
 .steps{display:grid;gap:24px;margin-top:24px}
 @media(min-width:640px){.steps{grid-template-columns:1fr 1fr 1fr}}
@@ -211,22 +208,21 @@ header{padding:20px 0;border-bottom:1px solid var(--border)}
 .step h3{font-size:13px;font-weight:700;margin-bottom:6px}
 .step p{font-size:12px;color:var(--text2);line-height:1.6}
 
-/* Tech stack */
 .stack{padding:60px 0;border-top:1px solid var(--border)}
 .stack-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .stack-item{font-size:11px;padding:6px 12px;border:1px solid var(--border);border-radius:3px;color:var(--text2)}
 
-/* CTA */
 .cta{padding:60px 0;border-top:1px solid var(--border);text-align:center}
 .cta h2{font-family:var(--serif);font-size:32px;font-weight:400;margin-bottom:12px}
 .cta p{color:var(--text2);font-size:13px;margin-bottom:24px}
+.cta-links{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .cta-btn{display:inline-block;background:var(--accent);color:var(--bg);font-family:var(--mono);font-size:13px;font-weight:700;padding:12px 32px;border-radius:var(--radius);transition:background .2s}
 .cta-btn:hover{background:var(--accent2);text-decoration:none}
+.cta-btn-ghost{display:inline-block;border:1px solid var(--border);color:var(--text2);font-family:var(--mono);font-size:13px;padding:12px 32px;border-radius:var(--radius);transition:border-color .2s}
+.cta-btn-ghost:hover{border-color:var(--text3);text-decoration:none}
 
-/* Footer */
 footer{padding:24px 0;border-top:1px solid var(--border)}
 
-/* Mobile */
 @media(max-width:639px){
 .stats{gap:24px}
 .hero{padding:48px 0 40px}
@@ -239,6 +235,11 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <header>
 <div class="container header-inner">
 <div class="logo">dev<span>drops</span>.run</div>
+<div class="header-links">
+<a href="/catalog">Catalog</a>
+<a href="/openapi.json">OpenAPI</a>
+<a href="/health">Status</a>
+</div>
 <div class="header-tag">x402 · USDC on Base</div>
 </div>
 </header>
@@ -246,13 +247,13 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <section class="hero">
 <div class="container">
 <h1>Data APIs that <em>agents pay for</em></h1>
-<p class="hero-sub">25 pay-per-query intelligence feeds powered by x402 micropayments. No API keys. No subscriptions. No human in the loop. Your agent sends a request, pays USDC, gets data.</p>
+<p class="hero-sub">22 pay-per-query intelligence feeds powered by x402 micropayments. No API keys. No subscriptions. No human in the loop. Your agent sends a request, pays USDC, gets data.</p>
 <div class="hero-code">
 <span class="comment">// One request. Instant data. Fractions of a cent.</span><br>
 <span class="kw">const</span> response = <span class="kw">await</span> fetchWithPayment(<br>
 &nbsp;&nbsp;<span class="str">"https://api.devdrops.run/api/predictions/markets"</span><br>
 );<br><br>
-<span class="comment">// → { polymarket: [...], kalshi: [...], manifold: [...] }</span><br>
+<span class="comment">// → { polymarket: [...], manifold: [...] }</span><br>
 <span class="comment">// Cost: $0.005 USDC — settled on Base in &lt;2 seconds</span>
 </div>
 </div>
@@ -276,13 +277,13 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="tier-label">Tier 1 — Domain Expertise</div>
 <div class="product-grid">
 <div class="product">
-<div class="product-head"><span class="product-name">Property intelligence</span><span class="product-price">$0.01–$0.05</span></div>
-<p class="product-desc">Global property market signals. Planning applications, price movements, comparables, zoning data. UK, US, AU.</p>
+<div class="product-head"><span class="product-name">Property intelligence</span><span class="product-price">$0.01</span></div>
+<p class="product-desc">UK property prices, ownership lookups, House Price Index by region. Land Registry + Companies House data.</p>
 <span class="product-tag tag-gap">No competition</span>
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">Address intelligence</span><span class="product-price">$0.02</span></div>
-<p class="product-desc">Submit an address → flood risk, crime stats, school ratings, transport links, broadband speeds, EPC ratings.</p>
+<p class="product-desc">Submit a UK address → flood risk, crime stats, school ratings, transport links. Environment Agency + Police API.</p>
 <span class="product-tag tag-gap">Market gap</span>
 </div>
 </div>
@@ -291,17 +292,17 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="product-grid">
 <div class="product">
 <div class="product-head"><span class="product-name">Prediction market feed</span><span class="product-price">$0.005</span></div>
-<p class="product-desc">Normalised odds from Polymarket, Kalshi, Manifold, Metaculus. Cross-platform spreads in one endpoint.</p>
+<p class="product-desc">Active markets from Polymarket and Manifold, normalised. Cross-platform spreads and search in one endpoint.</p>
 <span class="product-tag tag-gap">Dome acquired — gap open</span>
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">Sports betting odds</span><span class="product-price">$0.005</span></div>
-<p class="product-desc">Cross-bookmaker odds comparison. Football, basketball, tennis, cricket. Pay per lookup, no subscription.</p>
+<p class="product-desc">Cross-bookmaker odds comparison. Football, basketball, tennis, cricket. Live scores included.</p>
 <span class="product-tag tag-new">First x402-native</span>
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">Regulatory intelligence</span><span class="product-price">$0.01</span></div>
-<p class="product-desc">Companies House, SEC EDGAR, FCA notices, EU Official Journal. Structured change feeds for compliance agents.</p>
+<p class="product-desc">Companies House, SEC EDGAR, FCA notices. Structured change feeds for compliance agents.</p>
 <span class="product-tag tag-gap">Market gap</span>
 </div>
 <div class="product">
@@ -311,17 +312,17 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">Financial events calendar</span><span class="product-price">$0.005</span></div>
-<p class="product-desc">FOMC, ECB, BoE decisions. Earnings dates. Economic data releases. IPO schedules. Machine-readable JSON.</p>
+<p class="product-desc">FOMC, ECB, BoE decisions. Earnings dates. Economic data releases. Machine-readable JSON.</p>
 <span class="product-tag tag-new">First x402-native</span>
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">Domain & web intelligence</span><span class="product-price">$0.005</span></div>
-<p class="product-desc">WHOIS, DNS records, SSL certs, tech stack detection, domain history. No subscription needed.</p>
+<p class="product-desc">WHOIS, DNS records, SSL certs via RDAP and crt.sh. No subscription needed.</p>
 <span class="product-tag tag-new">First x402-native</span>
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">Public tenders</span><span class="product-price">$0.01</span></div>
-<p class="product-desc">Government contract opportunities and tender notices. UK Contracts Finder, TED (EU), SAM.gov (US).</p>
+<p class="product-desc">Government contract opportunities. UK Contracts Finder + SAM.gov (US). Search and recent feeds.</p>
 <span class="product-tag tag-gap">Market gap</span>
 </div>
 <div class="product">
@@ -331,7 +332,12 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">Email verification</span><span class="product-price">$0.005</span></div>
-<p class="product-desc">Syntax validation, MX record check, disposable domain detection. Batch support. No SMTP guessing.</p>
+<p class="product-desc">Syntax validation, MX record check, disposable domain detection. No SMTP. Self-contained.</p>
+<span class="product-tag tag-new">First x402-native</span>
+</div>
+<div class="product">
+<div class="product-head"><span class="product-name">Text translation</span><span class="product-price">$0.005</span></div>
+<p class="product-desc">Translate text across 100+ languages via LibreTranslate. Language auto-detection included.</p>
 <span class="product-tag tag-new">First x402-native</span>
 </div>
 </div>
@@ -340,32 +346,27 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="product-grid">
 <div class="product">
 <div class="product-head"><span class="product-name">Weather data</span><span class="product-price">$0.001</span></div>
-<p class="product-desc">Current conditions and 5-day forecasts by city or coordinates. Via OpenWeatherMap. Cached at edge.</p>
+<p class="product-desc">Current conditions and 5-day forecasts by city or coordinates. Cached at edge.</p>
 <span class="product-tag tag-free">$0.001/query</span>
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">Currency & FX rates</span><span class="product-price">$0.001</span></div>
-<p class="product-desc">33 major currencies, ECB reference rates, updated daily. Historical rates back to 1999 via Frankfurter.</p>
+<p class="product-desc">33 major currencies, ECB reference rates. Historical rates back to 1999. Convert between any pair.</p>
 <span class="product-tag tag-free">$0.001/query</span>
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">IP geolocation</span><span class="product-price">$0.001</span></div>
-<p class="product-desc">Country, region, city, timezone, ISP. Lookup any IP or auto-detect the requesting agent's location.</p>
+<p class="product-desc">Country, region, city, timezone, ISP. Lookup any IP or auto-detect the requesting agent's IP.</p>
 <span class="product-tag tag-free">$0.001/query</span>
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">Historical events</span><span class="product-price">$0.001</span></div>
-<p class="product-desc">"On this day" events, births, and deaths via Wikipedia. By date or today. 24-hour cached responses.</p>
+<p class="product-desc">"On this day" events, births, and deaths via Wikipedia. By date or today. Edge-cached.</p>
 <span class="product-tag tag-free">$0.001/query</span>
 </div>
 <div class="product">
 <div class="product-head"><span class="product-name">Food & nutrition</span><span class="product-price">$0.005</span></div>
-<p class="product-desc">Nutritional data for 3M+ products via Open Food Facts. Calories, allergens, ingredients, barcodes.</p>
-<span class="product-tag tag-new">First x402-native</span>
-</div>
-<div class="product">
-<div class="product-head"><span class="product-name">Text translation</span><span class="product-price">$0.005</span></div>
-<p class="product-desc">Translate text across 100+ languages via LibreTranslate. Language auto-detection included.</p>
+<p class="product-desc">3M+ products via Open Food Facts. Calories, allergens, ingredients. Lookup by barcode or name.</p>
 <span class="product-tag tag-new">First x402-native</span>
 </div>
 </div>
@@ -410,7 +411,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="step">
 <div class="step-num">01</div>
 <h3>Request</h3>
-<p>Send a standard HTTP request to any DevDrops endpoint. No API key, no auth header, no account needed.</p>
+<p>Send a standard HTTP GET or POST to any DevDrops endpoint. No API key, no auth header, no account needed.</p>
 </div>
 <div class="step">
 <div class="step-num">02</div>
@@ -420,7 +421,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="step">
 <div class="step-num">03</div>
 <h3>Receive</h3>
-<p>Payment verified on-chain in &lt;2 seconds. Data returned as structured JSON. Done.</p>
+<p>Payment verified on-chain in &lt;2 seconds. Structured JSON returned. Edge-cached for repeat queries.</p>
 </div>
 </div>
 </div>
@@ -435,11 +436,10 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <span class="stack-item">USDC on Base</span>
 <span class="stack-item">Cloudflare Workers</span>
 <span class="stack-item">Cloudflare D1</span>
-<span class="stack-item">Cloudflare R2</span>
 <span class="stack-item">Hono Framework</span>
 <span class="stack-item">Coinbase Facilitator</span>
+<span class="stack-item">OpenAPI 3.1</span>
 <span class="stack-item">MCP Compatible</span>
-<span class="stack-item">Linux Foundation Governed</span>
 </div>
 </div>
 </section>
@@ -448,14 +448,23 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="container">
 <h2>Start querying</h2>
 <p>Fund an agent wallet with USDC on Base. Hit any endpoint. Pay per request.</p>
+<div class="cta-links">
 <a href="/catalog" class="cta-btn">View API catalog →</a>
+<a href="/openapi.json" class="cta-btn-ghost">OpenAPI spec</a>
+</div>
 </div>
 </section>
 
 <footer>
 <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
 <span style="font-size:11px;color:var(--text3)">© 2026 DevDrops</span>
-<span style="font-size:11px;color:var(--text3)">x402 · Base · Cloudflare</span>
+<span style="font-size:11px;color:var(--text3)">
+<a href="/health" style="color:var(--text3)">Status</a>
+&nbsp;·&nbsp;
+<a href="/openapi.json" style="color:var(--text3)">OpenAPI</a>
+&nbsp;·&nbsp;
+x402 · Base · Cloudflare
+</span>
 </div>
 </footer>
 

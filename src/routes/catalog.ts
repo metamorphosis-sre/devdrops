@@ -7,7 +7,9 @@ const catalog = new Hono<{ Bindings: Env }>();
 catalog.get("/", (c) => {
   const products = Object.entries(pricingMap).map(([route, config]) => {
     const [method, path] = route.split(" ");
-    const slug = path.split("/")[2]; // /api/predictions/* → predictions
+    // /api/property/mcp/* → "property-mcp", /api/predictions/* → "predictions"
+    const parts = path.replace("/*", "").split("/").slice(2); // drop leading "" and "api"
+    const slug = parts.join("-");
 
     return {
       endpoint: path.replace("/*", ""),
