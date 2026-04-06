@@ -8,8 +8,8 @@
 
 **DevDrops** (`devdrops.run`) is a suite of 22 pay-per-query data APIs powered by the x402 micropayment protocol. AI agents and developers send a standard HTTP request, receive an HTTP 402 response with a USDC price, pay on Base (Coinbase's L2), and instantly receive structured JSON data. No API keys, no subscriptions, no accounts.
 
-**Live URL:** https://api.devdrops.run  
-**Staging:** https://devdrops-api.pchawla.workers.dev  
+**Landing page:** https://devdrops.run  
+**API base:** https://api.devdrops.run  
 **GitHub:** https://github.com/metamorphosis-sre/devdrops (private)
 
 ---
@@ -47,7 +47,7 @@ Agent → GET /api/fx/latest
 
 ```
 src/
-├── index.ts              — Hono app entry, payment middleware, route mounting
+├── index.ts              — Hono app entry, payment middleware, route mounting, LANDING_HTML
 ├── types.ts              — Env bindings + shared TypeScript types
 ├── middleware/
 │   ├── payment.ts        — Pricing map ($0.001–$0.10) + x402 route builder
@@ -57,14 +57,19 @@ src/
 │   ├── cache.ts          — D1 cache read/write helpers
 │   ├── fetch.ts          — Upstream fetch wrapper with timeout + error types
 │   └── cdp-auth.ts       — Coinbase CDP JWT auth (Ed25519, 64-byte raw key format)
-├── routes/               — 22 product routers + catalog + health + openapi
+├── routes/
+│   ├── health.ts         — GET /health — D1, KV, R2 status
+│   ├── catalog.ts        — GET /catalog — machine-readable product list
+│   ├── openapi.ts        — GET /openapi.json — OpenAPI 3.1 spec
+│   ├── well-known.ts     — GET /.well-known/x402 — agent discovery manifest
+│   └── [22 product routers]
 ├── cron/
 │   ├── handler.ts        — Scheduled event dispatcher
 │   ├── health-check.ts   — Pings all data_sources, auto-failover on 3 failures
-│   └── backup.ts         — Nightly D1 → R2 export (skips gracefully if R2 not configured)
+│   └── backup.ts         — Nightly D1 → R2 export (skips if R2 not configured)
 └── db/
     ├── schema.sql        — 5 tables: transactions, abandoned_402s, health_log, data_sources, product_cache
-    └── seeds.sql         — Upstream API health-check URLs (one per product + backups)
+    └── seeds.sql         — Upstream API health-check URLs
 ```
 
 ### D1 Schema
@@ -86,7 +91,7 @@ src/
 
 ---
 
-## Products (22)
+## Products (22 — all live)
 
 ### Tier 1 — Domain Expertise
 
@@ -100,7 +105,7 @@ src/
 
 | # | Product | Endpoint | Price | Primary Source | Status |
 |---|---|---|---|---|---|
-| 4 | Prediction markets | `GET /api/predictions/*` | $0.005 | Polymarket Gamma + Manifold | Live (402) |
+| 4 | Prediction markets | `GET /api/predictions/*` | $0.005 | Polymarket + Manifold | Live (402) |
 | 5 | Sports odds | `GET /api/odds/*` | $0.005 | The Odds API | Live (402) |
 | 6 | Regulatory intelligence | `GET /api/regulatory/*` | $0.01 | Companies House + SEC EDGAR | Live (402) |
 | 7 | Company filings | `GET /api/filings/*` | $0.01 | SEC EDGAR + Companies House | Live (402) |
@@ -127,11 +132,25 @@ src/
 
 ### Dropped Products
 
-| Product | Reason |
-|---|---|
-| Flights | Amadeus signup closed; no viable free-tier alternative |
-| Jobs | All job search APIs have restrictive commercial terms or 14-day trials |
-| Shipping | No free-tier multi-carrier rate API; EasyPost/Shippo require paid plans |
+| Product | Original Source | Reason |
+|---|---|---|
+| Flights | Amadeus → Kiwi Tequila | Amadeus signup closed; Kiwi Tequila requires form approval — no instant key |
+| Jobs | Adzuna → JSearch | Adzuna: 14-day commercial trial only. JSearch: RapidAPI dependency, weak x402 fit |
+| Shipping | EasyPost | No free-tier multi-carrier rate API; EasyPost/Shippo require paid plans for rate queries |
+
+---
+
+## Public Endpoints
+
+| URL | Description | Auth |
+|---|---|---|
+| `https://devdrops.run` | Landing page | None |
+| `https://api.devdrops.run` | Landing page (same Worker) | None |
+| `https://api.devdrops.run/health` | Health check (D1, KV, R2) | None |
+| `https://api.devdrops.run/catalog` | Machine-readable product catalog | None |
+| `https://api.devdrops.run/openapi.json` | OpenAPI 3.1 spec | None |
+| `https://api.devdrops.run/.well-known/x402` | Agent discovery manifest | None |
+| `https://api.devdrops.run/api/*` | All paid endpoints | x402 (USDC on Base) |
 
 ---
 
@@ -146,7 +165,7 @@ src/
 | `FACILITATOR_URL` | `https://api.cdp.coinbase.com/platform/v2/x402` |
 | `PAY_TO_ADDRESS` | `0xc42EAe553c5C2d521d8A0543c265480B380179D2` |
 
-### Secrets (set via `wrangler secret put`)
+### Secrets
 
 | Secret | Purpose | Status |
 |---|---|---|
@@ -169,13 +188,11 @@ src/
 
 ## Deployment
 
-### Commands
-
 ```bash
 # Deploy
 npx wrangler deploy --env=""
 
-# Initialize D1 schema
+# D1 schema
 npx wrangler d1 execute devdrops --remote --file=src/db/schema.sql
 
 # Seed data sources
@@ -186,78 +203,43 @@ echo "value" | npx wrangler secret put SECRET_NAME --env=""
 
 # Tail live logs
 npx wrangler tail --format=pretty
-
-# List secrets
-npx wrangler secret list --env=""
 ```
-
-### Endpoints
-
-| URL | Description |
-|---|---|
-| `https://api.devdrops.run` | Landing page |
-| `https://api.devdrops.run/health` | Health check (D1, KV, R2) |
-| `https://api.devdrops.run/catalog` | Machine-readable API catalog |
-| `https://api.devdrops.run/openapi.json` | OpenAPI 3.1 spec |
-| `https://api.devdrops.run/api/*` | All paid endpoints (returns 402) |
 
 ---
 
 ## Key Technical Decisions
 
-### 1. CDP facilitator over x402.org facilitator
-The free x402.org facilitator only supports Base Sepolia (testnet). For Base mainnet, Coinbase's CDP facilitator (`api.cdp.coinbase.com/platform/v2/x402`) is required.
-
-### 2. Ed25519 (EdDSA), not P-256 (ES256)
-New CDP API keys from `portal.cdp.coinbase.com` use Ed25519 (64-byte raw format: first 32 bytes = seed, last 32 bytes = public key). The JWT header must specify `"alg": "EdDSA"`.
-
-### 3. R2 is optional — backup job gracefully skips
-R2 binding commented out in `wrangler.toml` until Cloudflare support enables it. `STORAGE` typed as `R2Bucket | undefined`. Backup cron checks for it and skips with a log message rather than crashing.
-
-### 4. ip-api.com replaced with IPinfo.io
-ip-api.com's free tier is non-commercial only. IPinfo.io's free tier (50K lookups/month) explicitly allows commercial use.
-
-### 5. Payment middleware instantiated per-request
-`paymentMiddlewareFromConfig` is called on every `/api/*` request rather than at app startup. Cloudflare Workers don't have persistent startup state; the facilitator `initialize()` call must happen within request context where `env` bindings are available.
-
-### 6. `ENVIRONMENT=development` bypasses payment
-Setting `ENVIRONMENT=development` in wrangler.toml skips the x402 middleware entirely — useful for local testing with `wrangler dev`.
-
-### 7. Flights, jobs, shipping dropped
-All three required third-party API keys with either closed signups (Amadeus), restrictive commercial terms (job search APIs), or no viable free-tier multi-carrier option (shipping). Dropped to keep all 22 products fully live with no 503s.
+1. **CDP facilitator (mainnet)** — x402.org only supports testnet; CDP required for Base mainnet
+2. **Ed25519 / EdDSA** — New CDP portal keys are 64-byte raw Ed25519, not P-256/ES256
+3. **R2 optional** — `STORAGE: R2Bucket | undefined`; backup cron skips gracefully if absent
+4. **IPinfo.io over ip-api.com** — ip-api.com free tier is non-commercial
+5. **Payment middleware per-request** — Cloudflare Workers have no persistent startup state
+6. **`ENVIRONMENT=development` bypasses payment** — useful for local `wrangler dev`
+7. **Zone routes for devdrops.run** — existing DNS A records blocked `custom_domain`; `zone_name` routes intercept at proxy level without DNS changes
 
 ---
 
-## Data Source Decisions (Errata)
+## Discovery & Distribution
 
-| Product | Original Source | Replaced With | Reason |
-|---|---|---|---|
-| Weather | Open-Meteo | OpenWeatherMap | Open-Meteo free tier is non-commercial |
-| IP lookup | ip-api.com | IPinfo.io | ip-api.com free tier is non-commercial |
-| Email verify | Full SMTP | Syntax + MX + disposable only | Port 25 blocked on Workers |
+| Channel | Status |
+|---|---|
+| `/.well-known/x402` manifest | ✅ Live at api.devdrops.run/.well-known/x402 |
+| `/openapi.json` | ✅ Live — OpenAPI 3.1 with x402 extensions |
+| coinbase/x402 Bazaar | ⏳ PR open: coinbase/x402#38 |
+| xpaysh/awesome-x402 | ⏳ PR open: xpaysh/awesome-x402#209 |
+| x402scan.com | ⏳ Auto-appears after first paid transaction |
+| Bankr x402 Cloud | ❌ Skipped — requires re-hosting on their infrastructure |
+| MCP registry | 🔲 Pending — Property MCP manifest not yet published |
 
 ---
 
 ## Pending / Next Steps
 
-| Priority | Task | Notes |
-|---|---|---|
-| High | R2 bucket activation | Waiting on Cloudflare support ticket |
-| Medium | `devdrops.run` landing page | Cloudflare Pages site (separate from Worker) |
-| Medium | x402 Bazaar listing approval | PR open: coinbase/x402#38 |
-| Low | Property MCP server manifest | MCP tools declared, no manifest file yet |
-| Low | Bankr marketplace submission | Submit endpoints |
-| Low | awesome-x402 GitHub list | Submit PR |
-
----
-
-## Discovery Channels
-
-- [ ] x402 Bazaar — PR open at coinbase/x402#38
-- [ ] x402scan.com — auto-appears after first paid transaction
-- [ ] Bankr marketplace — submit endpoints
-- [ ] MCP registry — for Property MCP server (#2)
-- [ ] awesome-x402 GitHub list
+| Priority | Task |
+|---|---|
+| High | R2 bucket — waiting on Cloudflare support ticket |
+| Medium | Property MCP manifest file |
+| Low | Bankr — revisit if they add external service registration |
 
 ---
 
@@ -266,7 +248,7 @@ All three required third-party API keys with either closed signups (Amadeus), re
 | Item | Cost | Frequency |
 |---|---|---|
 | Cloudflare Workers Paid | $5 | Monthly |
-| The Odds API Standard | $35 | Monthly (when live) |
+| The Odds API Standard | $35 | Monthly |
 | Claude API (usage-based) | ~$5–50 | Variable |
 | devdrops.run domain | ~£10 | Annual |
 | **Total fixed** | **~$40–90/mo** | |
@@ -280,10 +262,14 @@ All three required third-party API keys with either closed signups (Amadeus), re
 | 2026-04-06 | Initial build: all routes, middleware, D1 schema, cron jobs |
 | 2026-04-06 | Fixed ip-api.com → IPinfo.io (commercial licensing) |
 | 2026-04-06 | R2 binding commented out pending Cloudflare support |
-| 2026-04-06 | Secrets set: ANTHROPIC, WEATHER, ODDS, COMPANIES_HOUSE, CDP credentials |
+| 2026-04-06 | Secrets set: ANTHROPIC, WEATHER, ODDS, COMPANIES_HOUSE, CDP |
 | 2026-04-06 | HTTP 402 confirmed working on all `/api/*` routes |
 | 2026-04-06 | GitHub repo created, initial commit pushed |
 | 2026-04-06 | Added OpenAPI 3.1 spec at `/openapi.json` |
 | 2026-04-06 | Custom domain `api.devdrops.run` activated |
+| 2026-04-06 | Zone routes for `devdrops.run` + `www.devdrops.run` |
 | 2026-04-06 | coinbase/x402#38 opened — Bazaar ecosystem listing |
+| 2026-04-06 | xpaysh/awesome-x402#209 opened — awesome list listing |
 | 2026-04-06 | Dropped flights, jobs, shipping — 22 live products |
+| 2026-04-06 | Fixed catalog slug deduplication bug (21 → 22) |
+| 2026-04-06 | Added `/.well-known/x402` agent discovery manifest |
