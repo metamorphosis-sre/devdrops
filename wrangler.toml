@@ -48,8 +48,6 @@ vars = { ENVIRONMENT = "production", NETWORK = "eip155:8453", FACILITATOR_URL = 
 # ODDS_API_KEY             — The Odds API key (free tier / $35/mo)
 # COMPANIES_HOUSE_API_KEY  — UK Companies House API key (free)
 # ANTHROPIC_API_KEY        — Claude API key (for sentiment, documents, research, signals)
-# AMADEUS_API_KEY          — Amadeus flight search API key (free tier)
-# AMADEUS_API_SECRET       — Amadeus flight search API secret
-# ADZUNA_APP_ID            — Adzuna job search app ID (free tier)
-# ADZUNA_API_KEY           — Adzuna job search API key
+# KIWI_TEQUILA_API_KEY     — Kiwi Tequila flight search (register at tequila.kiwi.com)
+# JSEARCH_API_KEY          — JSearch via RapidAPI (rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch)
 # EASYPOST_API_KEY         — EasyPost shipping API key (free tier)

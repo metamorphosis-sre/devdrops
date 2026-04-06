@@ -3,58 +3,84 @@ import type { Env } from "../types";
 import { getCached, setCache } from "../lib/cache";
 import { fetchUpstream, missingKeyResponse } from "../lib/fetch";
 
+// Powered by Kiwi Tequila API (https://tequila.kiwi.com)
+// Register at: https://tequila.kiwi.com/register
+// Set secret: KIWI_TEQUILA_API_KEY
+
 const PRODUCT = "flights";
 const CACHE_TTL = 1800; // 30 minutes
+const BASE_URL = "https://api.tequila.kiwi.com";
 
 const flights = new Hono<{ Bindings: Env }>();
 
-// GET /api/flights/search?origin=LHR&destination=JFK&date=2026-05-01
+// GET /api/flights/search?origin=LHR&destination=JFK&date=2026-05-01&adults=1
 flights.get("/search", async (c) => {
-  if (!c.env.AMADEUS_API_KEY || !c.env.AMADEUS_API_SECRET) {
-    return c.json(missingKeyResponse("AMADEUS_API_KEY and AMADEUS_API_SECRET"), 503);
+  if (!c.env.KIWI_TEQUILA_API_KEY) {
+    return c.json(missingKeyResponse("KIWI_TEQUILA_API_KEY"), 503);
   }
 
   const origin = c.req.query("origin");
   const destination = c.req.query("destination");
-  const date = c.req.query("date");
-  const adults = c.req.query("adults") ?? "1";
+  const date = c.req.query("date"); // YYYY-MM-DD
+  const adults = parseInt(c.req.query("adults") ?? "1");
 
   if (!origin || !destination || !date) {
     return c.json({ error: "Missing 'origin', 'destination', and 'date' query params" }, 400);
   }
 
+  // Tequila expects DD/MM/YYYY
+  const [yyyy, mm, dd] = date.split("-");
+  if (!yyyy || !mm || !dd) {
+    return c.json({ error: "Invalid date format — use YYYY-MM-DD" }, 400);
+  }
+  const tequilaDate = `${dd}/${mm}/${yyyy}`;
+
   const cacheKey = `search:${origin}:${destination}:${date}:${adults}`;
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  // Get Amadeus access token
-  const token = await getAmadeusToken(c.env.AMADEUS_API_KEY, c.env.AMADEUS_API_SECRET);
-  if (!token) return c.json({ error: "Amadeus authentication failed" }, 503);
+  const url =
+    `${BASE_URL}/v2/search` +
+    `?fly_from=${encodeURIComponent(origin)}` +
+    `&fly_to=${encodeURIComponent(destination)}` +
+    `&date_from=${tequilaDate}` +
+    `&date_to=${tequilaDate}` +
+    `&adults=${adults}` +
+    `&limit=10` +
+    `&curr=USD` +
+    `&sort=price`;
 
-  const url = `https://api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${origin}&destinationLocationCode=${destination}&departureDate=${date}&adults=${adults}&max=10&currencyCode=USD`;
   const res = await fetchUpstream(url, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { apikey: c.env.KIWI_TEQUILA_API_KEY },
   });
   const raw: any = await res.json();
+
+  if (raw.error) {
+    return c.json({ error: "Upstream error", detail: raw.error }, 502);
+  }
 
   const data = {
     origin,
     destination,
     date,
+    currency: "USD",
     offers: raw.data?.map((offer: any) => ({
-      price: { total: offer.price?.total, currency: offer.price?.currency },
-      itineraries: offer.itineraries?.map((it: any) => ({
-        duration: it.duration,
-        segments: it.segments?.map((seg: any) => ({
-          departure: { airport: seg.departure?.iataCode, time: seg.departure?.at },
-          arrival: { airport: seg.arrival?.iataCode, time: seg.arrival?.at },
-          carrier: seg.carrierCode,
-          flight_number: `${seg.carrierCode}${seg.number}`,
-          duration: seg.duration,
-          aircraft: seg.aircraft?.code,
-        })),
+      price: offer.price,
+      duration_hours: Math.round(offer.duration?.total / 3600),
+      stops: offer.route?.length - 1,
+      airlines: [...new Set(offer.airlines ?? [])],
+      departure: offer.local_departure,
+      arrival: offer.local_arrival,
+      deep_link: offer.deep_link,
+      segments: offer.route?.map((seg: any) => ({
+        from: seg.flyFrom,
+        to: seg.flyTo,
+        departure: seg.local_departure,
+        arrival: seg.local_arrival,
+        carrier: seg.airline,
+        flight_number: seg.flight_no,
+        aircraft: seg.equipment,
       })),
-      booking_class: offer.travelerPricings?.[0]?.fareDetailsBySegment?.[0]?.cabin,
     })),
   };
 
@@ -64,8 +90,8 @@ flights.get("/search", async (c) => {
 
 // GET /api/flights/airports?keyword=London
 flights.get("/airports", async (c) => {
-  if (!c.env.AMADEUS_API_KEY || !c.env.AMADEUS_API_SECRET) {
-    return c.json(missingKeyResponse("AMADEUS_API_KEY and AMADEUS_API_SECRET"), 503);
+  if (!c.env.KIWI_TEQUILA_API_KEY) {
+    return c.json(missingKeyResponse("KIWI_TEQUILA_API_KEY"), 503);
   }
 
   const keyword = c.req.query("keyword");
@@ -75,36 +101,30 @@ flights.get("/airports", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const token = await getAmadeusToken(c.env.AMADEUS_API_KEY, c.env.AMADEUS_API_SECRET);
-  if (!token) return c.json({ error: "Amadeus authentication failed" }, 503);
+  const url =
+    `${BASE_URL}/locations/query` +
+    `?term=${encodeURIComponent(keyword)}` +
+    `&locale=en-US` +
+    `&location_types=airport` +
+    `&limit=10`;
 
-  const url = `https://api.amadeus.com/v1/reference-data/locations?subType=AIRPORT&keyword=${encodeURIComponent(keyword)}&page[limit]=10`;
-  const res = await fetchUpstream(url, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetchUpstream(url, {
+    headers: { apikey: c.env.KIWI_TEQUILA_API_KEY },
+  });
   const raw: any = await res.json();
 
-  const data = raw.data?.map((loc: any) => ({
-    iata: loc.iataCode,
+  const data = raw.locations?.map((loc: any) => ({
+    iata: loc.code,
     name: loc.name,
-    city: loc.address?.cityName,
-    country: loc.address?.countryCode,
+    city: loc.city?.name,
+    country: loc.country?.name,
+    country_code: loc.country?.code,
+    lat: loc.location?.lat,
+    lon: loc.location?.lon,
   }));
 
   await setCache(c.env.DB, PRODUCT, cacheKey, data, 86400);
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
-
-async function getAmadeusToken(apiKey: string, apiSecret: string): Promise<string | null> {
-  try {
-    const res = await fetch("https://api.amadeus.com/v1/security/oauth2/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `grant_type=client_credentials&client_id=${apiKey}&client_secret=${apiSecret}`,
-    });
-    const raw: any = await res.json();
-    return raw.access_token ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export default flights;
