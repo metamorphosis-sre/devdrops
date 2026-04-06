@@ -1,0 +1,60 @@
+import type { PricingMap } from "../types";
+
+// Central pricing map for all DevDrops products.
+// Add new product routes here — the x402 middleware reads this to set per-route prices.
+// Prices are in USD (dollar-prefixed strings required by x402).
+export const pricingMap: PricingMap = {
+  // Tier 1: Domain Expertise
+  "GET /api/property/*": { price: "$0.01", description: "Global property intelligence — planning, prices, zoning" },
+  "GET /api/property/mcp/*": { price: "$0.01", description: "Property intelligence via MCP tools" },
+
+  // Tier 2: Data Aggregation
+  "GET /api/predictions/*": { price: "$0.005", description: "Cross-platform prediction market odds" },
+  "GET /api/odds/*": { price: "$0.005", description: "Cross-bookmaker sports betting odds" },
+  "GET /api/regulatory/*": { price: "$0.01", description: "Regulatory change feeds — Companies House, SEC, FCA" },
+  "GET /api/calendar/*": { price: "$0.005", description: "Financial events calendar — FOMC, earnings, IPOs" },
+  "GET /api/filings/*": { price: "$0.01", description: "Company filings and beneficial ownership" },
+  "GET /api/domain/*": { price: "$0.005", description: "WHOIS, DNS, SSL, tech stack detection" },
+  "GET /api/weather/*": { price: "$0.001", description: "Current conditions, forecasts, severe weather alerts" },
+  "GET /api/fx/*": { price: "$0.001", description: "Currency exchange rates — 33 major currencies" },
+  "GET /api/ip/*": { price: "$0.001", description: "IP geolocation — country, city, ISP, proxy detection" },
+  "GET /api/history/*": { price: "$0.001", description: "Historical events and 'on this day' data" },
+  "GET /api/papers/*": { price: "$0.005", description: "Academic paper search — abstracts, citations, DOIs" },
+  "GET /api/food/*": { price: "$0.005", description: "Nutrition data — calories, allergens, ingredients" },
+  "GET /api/tenders/*": { price: "$0.01", description: "Public procurement and government tender notices" },
+
+  // Tier 3: AI-Enhanced (higher prices to cover Claude API costs)
+  "GET /api/sentiment/*": { price: "$0.02", description: "AI-powered news sentiment analysis" },
+  "POST /api/sentiment/*": { price: "$0.02", description: "AI-powered news sentiment analysis" },
+  "GET /api/signals/*": { price: "$0.05", description: "Cross-market correlation signals" },
+  "POST /api/documents/*": { price: "$0.10", description: "Contract and document summarisation" },
+  "GET /api/location/*": { price: "$0.02", description: "Address intelligence — flood, crime, schools, transport" },
+  "GET /api/research/*": { price: "$0.10", description: "AI research brief generator" },
+  "POST /api/research/*": { price: "$0.10", description: "AI research brief generator" },
+
+  // Expansion products
+  "GET /api/flights/*": { price: "$0.01", description: "Flight and travel price search" },
+  "GET /api/jobs/*": { price: "$0.01", description: "Job market and salary data" },
+  "POST /api/translate/*": { price: "$0.005", description: "Text translation — 100+ languages" },
+  "GET /api/email-verify/*": { price: "$0.005", description: "Email address verification" },
+  "GET /api/shipping/*": { price: "$0.01", description: "Shipping and logistics rate comparison" },
+};
+
+// Build the x402 routes config from the pricing map.
+export function buildX402Routes(payTo: string, network: string) {
+  const routes: Record<string, { accepts: { scheme: string; price: string; network: string; payTo: string }; description: string }> = {};
+
+  for (const [route, config] of Object.entries(pricingMap)) {
+    routes[route] = {
+      accepts: {
+        scheme: "exact",
+        price: config.price,
+        network,
+        payTo,
+      },
+      description: config.description,
+    };
+  }
+
+  return routes;
+}
