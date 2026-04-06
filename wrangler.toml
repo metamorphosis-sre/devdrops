@@ -2,6 +2,12 @@ name = "devdrops-api"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
 
+# Custom domain
+routes = [
+  { pattern = "api.devdrops.run", custom_domain = true }
+]
+workers_dev = true
+
 # D1 Database
 [[d1_databases]]
 binding = "DB"
