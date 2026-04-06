@@ -40,7 +40,6 @@ const SPEC = {
     { name: "Location", description: "UK address intelligence (flood, crime, amenities)" },
     { name: "Translate", description: "Text translation (LibreTranslate)" },
     { name: "Jobs", description: "Job market & salary data (JSearch)" },
-    { name: "Shipping", description: "Carrier rate comparison (EasyPost)" },
     { name: "Sentiment", description: "AI news sentiment analysis (Claude)" },
     { name: "Signals", description: "AI cross-market signals (Claude)" },
     { name: "Documents", description: "AI document summarisation (Claude)" },
@@ -888,45 +887,6 @@ const SPEC = {
         ],
         responses: {
           "200": { description: "Job categories" },
-          "402": { $ref: "#/components/responses/PaymentRequired" },
-          "503": { $ref: "#/components/responses/ServiceUnavailable" },
-        },
-      },
-    },
-
-    // ── Shipping ──────────────────────────────────────────────────────────────
-    "/api/shipping/estimate": {
-      get: {
-        tags: ["Shipping"],
-        summary: "Get shipping rates",
-        description: "Compare carrier rates (USPS, UPS, FedEx, DHL) via EasyPost. **Price: $0.01 USDC**",
-        "x-price-usd": 0.01,
-        parameters: [
-          { name: "from_zip", in: "query", required: true, schema: { type: "string" }, description: "Origin ZIP code" },
-          { name: "to_zip", in: "query", required: true, schema: { type: "string" }, description: "Destination ZIP code" },
-          { name: "weight_oz", in: "query", required: true, schema: { type: "number" }, description: "Package weight in ounces" },
-        ],
-        responses: {
-          "200": { description: "Shipping rates" },
-          "400": { $ref: "#/components/responses/BadRequest" },
-          "402": { $ref: "#/components/responses/PaymentRequired" },
-          "503": { $ref: "#/components/responses/ServiceUnavailable" },
-        },
-      },
-    },
-    "/api/shipping/track": {
-      get: {
-        tags: ["Shipping"],
-        summary: "Track a shipment",
-        description: "Track a package by carrier and tracking code. **Price: $0.01 USDC**",
-        "x-price-usd": 0.01,
-        parameters: [
-          { name: "carrier", in: "query", required: true, schema: { type: "string" }, description: "Carrier name (e.g. usps, ups, fedex)" },
-          { name: "tracking_code", in: "query", required: true, schema: { type: "string" } },
-        ],
-        responses: {
-          "200": { description: "Tracking status" },
-          "400": { $ref: "#/components/responses/BadRequest" },
           "402": { $ref: "#/components/responses/PaymentRequired" },
           "503": { $ref: "#/components/responses/ServiceUnavailable" },
         },

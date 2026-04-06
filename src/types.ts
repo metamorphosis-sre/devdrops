@@ -20,7 +20,6 @@ export interface Env {
   COMPANIES_HOUSE_API_KEY: string;  // UK Companies House
   ANTHROPIC_API_KEY: string;        // Claude API for AI products
   JSEARCH_API_KEY: string;          // JSearch (RapidAPI) job search
-  EASYPOST_API_KEY: string;         // EasyPost shipping
 }
 
 export interface ProductConfig {
