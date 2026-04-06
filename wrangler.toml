@@ -4,7 +4,9 @@ compatibility_date = "2025-04-01"
 
 # Custom domain
 routes = [
-  { pattern = "api.devdrops.run", custom_domain = true }
+  { pattern = "api.devdrops.run", custom_domain = true },
+  { pattern = "devdrops.run/*", zone_name = "devdrops.run" },
+  { pattern = "www.devdrops.run/*", zone_name = "devdrops.run" }
 ]
 workers_dev = true
 
