@@ -33,7 +33,6 @@ export const pricingMap: PricingMap = {
   "POST /api/research/*": { price: "$0.10", description: "AI research brief generator" },
 
   // Expansion products
-  "GET /api/flights/*": { price: "$0.01", description: "Flight and travel price search" },
   "GET /api/jobs/*": { price: "$0.01", description: "Job market and salary data" },
   "POST /api/translate/*": { price: "$0.005", description: "Text translation — 100+ languages" },
   "GET /api/email-verify/*": { price: "$0.005", description: "Email address verification" },

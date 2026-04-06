@@ -39,8 +39,7 @@ const SPEC = {
     { name: "Property", description: "UK property intelligence" },
     { name: "Location", description: "UK address intelligence (flood, crime, amenities)" },
     { name: "Translate", description: "Text translation (LibreTranslate)" },
-    { name: "Flights", description: "Flight search (Amadeus)" },
-    { name: "Jobs", description: "Job market & salary data (Adzuna)" },
+    { name: "Jobs", description: "Job market & salary data (JSearch)" },
     { name: "Shipping", description: "Carrier rate comparison (EasyPost)" },
     { name: "Sentiment", description: "AI news sentiment analysis (Claude)" },
     { name: "Signals", description: "AI cross-market signals (Claude)" },
@@ -838,51 +837,12 @@ const SPEC = {
       },
     },
 
-    // ── Flights ───────────────────────────────────────────────────────────────
-    "/api/flights/search": {
-      get: {
-        tags: ["Flights"],
-        summary: "Search flights",
-        description: "Search available flights between airports via Amadeus. Requires Amadeus key. **Price: $0.01 USDC**",
-        "x-price-usd": 0.01,
-        parameters: [
-          { name: "origin", in: "query", required: true, schema: { type: "string" }, description: "IATA code (e.g. LHR)" },
-          { name: "destination", in: "query", required: true, schema: { type: "string" }, description: "IATA code (e.g. JFK)" },
-          { name: "date", in: "query", required: true, schema: { type: "string", format: "date" }, description: "Departure date (YYYY-MM-DD)" },
-          { name: "adults", in: "query", schema: { type: "integer", default: 1 } },
-        ],
-        responses: {
-          "200": { description: "Flight offers" },
-          "400": { $ref: "#/components/responses/BadRequest" },
-          "402": { $ref: "#/components/responses/PaymentRequired" },
-          "503": { $ref: "#/components/responses/ServiceUnavailable" },
-        },
-      },
-    },
-    "/api/flights/airports": {
-      get: {
-        tags: ["Flights"],
-        summary: "Airport search",
-        description: "Search airports by name or city keyword. **Price: $0.01 USDC**",
-        "x-price-usd": 0.01,
-        parameters: [
-          { name: "keyword", in: "query", required: true, schema: { type: "string" }, description: "City or airport name" },
-        ],
-        responses: {
-          "200": { description: "Matching airports" },
-          "400": { $ref: "#/components/responses/BadRequest" },
-          "402": { $ref: "#/components/responses/PaymentRequired" },
-          "503": { $ref: "#/components/responses/ServiceUnavailable" },
-        },
-      },
-    },
-
     // ── Jobs ──────────────────────────────────────────────────────────────────
     "/api/jobs/search": {
       get: {
         tags: ["Jobs"],
         summary: "Search job listings",
-        description: "Live job postings by keyword and location via Adzuna. **Price: $0.01 USDC**",
+        description: "Live job postings by keyword and location via JSearch (aggregates Indeed, LinkedIn, Glassdoor, ZipRecruiter). **Price: $0.01 USDC**",
         "x-price-usd": 0.01,
         parameters: [
           { name: "q", in: "query", required: true, schema: { type: "string" }, description: "Job title or keyword" },

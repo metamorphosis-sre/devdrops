@@ -42,7 +42,6 @@ import research from "./routes/research";
 import signals from "./routes/signals";
 
 // Group D: External service keys
-import flights from "./routes/flights";
 import jobs from "./routes/jobs";
 import shipping from "./routes/shipping";
 
@@ -117,7 +116,6 @@ app.route("/api/research", research);
 app.route("/api/signals", signals);
 
 // Group D: External services
-app.route("/api/flights", flights);
 app.route("/api/jobs", jobs);
 app.route("/api/shipping", shipping);
 
@@ -268,7 +266,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 
 <div class="container">
 <div class="stats">
-<div class="stat"><span class="stat-val">25</span><span class="stat-label">Data products</span></div>
+<div class="stat"><span class="stat-val">24</span><span class="stat-label">Data products</span></div>
 <div class="stat"><span class="stat-val">$0.001</span><span class="stat-label">Starting price</span></div>
 <div class="stat"><span class="stat-val">&lt;2s</span><span class="stat-label">Settlement</span></div>
 <div class="stat"><span class="stat-val">0</span><span class="stat-label">API keys needed</span></div>
@@ -335,11 +333,6 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="product">
 <div class="product-head"><span class="product-name">Academic papers</span><span class="product-price">$0.005</span></div>
 <p class="product-desc">Search academic literature via OpenAlex and Semantic Scholar. Abstracts, citations, DOIs, open access links.</p>
-<span class="product-tag tag-new">First x402-native</span>
-</div>
-<div class="product">
-<div class="product-head"><span class="product-name">Flight & travel search</span><span class="product-price">$0.01</span></div>
-<p class="product-desc">Search flight prices between airports via Amadeus. Routes, prices, availability. No Amadeus account needed.</p>
 <span class="product-tag tag-new">First x402-native</span>
 </div>
 <div class="product">
