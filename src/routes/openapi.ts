@@ -768,11 +768,11 @@ const SPEC = {
     },
 
     // ── Translate ─────────────────────────────────────────────────────────────
-    "/api/translate": {
+    "/api/translate/text": {
       post: {
         tags: ["Translate"],
         summary: "Translate text",
-        description: "Translate text between 100+ languages via LibreTranslate. **Price: $0.005 USDC**",
+        description: "Translate text between 70+ languages via MyMemory. Max 500 characters per request. **Price: $0.005 USDC**",
         "x-price-usd": 0.005,
         requestBody: {
           required: true,
@@ -782,16 +782,16 @@ const SPEC = {
                 type: "object",
                 required: ["q", "target"],
                 properties: {
-                  q: { type: "string", description: "Text to translate" },
-                  source: { type: "string", description: "Source language code (omit for auto-detect)" },
-                  target: { type: "string", description: "Target language code (e.g. es, fr, de)" },
+                  q: { type: "string", description: "Text to translate (max 500 characters)" },
+                  source: { type: "string", description: "Source language code (omit for auto-detect, e.g. 'en')" },
+                  target: { type: "string", description: "Target language code (e.g. 'es', 'fr', 'zh')" },
                 },
               },
             },
           },
         },
         responses: {
-          "200": { description: "Translation result" },
+          "200": { description: "Translation result with source/target language and match quality" },
           "400": { $ref: "#/components/responses/BadRequest" },
           "402": { $ref: "#/components/responses/PaymentRequired" },
         },
@@ -801,35 +801,10 @@ const SPEC = {
       get: {
         tags: ["Translate"],
         summary: "List supported languages",
-        description: "All languages supported by LibreTranslate. **Price: $0.005 USDC**",
+        description: "All 70+ languages supported. Returns ISO 639-1 code and display name. **Price: $0.005 USDC**",
         "x-price-usd": 0.005,
         responses: {
-          "200": { description: "Supported languages" },
-          "402": { $ref: "#/components/responses/PaymentRequired" },
-        },
-      },
-    },
-    "/api/translate/detect": {
-      post: {
-        tags: ["Translate"],
-        summary: "Detect language",
-        description: "Detect the language of a piece of text. **Price: $0.005 USDC**",
-        "x-price-usd": 0.005,
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                required: ["q"],
-                properties: { q: { type: "string", description: "Text to detect" } },
-              },
-            },
-          },
-        },
-        responses: {
-          "200": { description: "Detected language" },
-          "400": { $ref: "#/components/responses/BadRequest" },
+          "200": { description: "Supported languages with codes and names" },
           "402": { $ref: "#/components/responses/PaymentRequired" },
         },
       },

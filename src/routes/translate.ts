@@ -5,66 +5,101 @@ import { fetchUpstream } from "../lib/fetch";
 
 const PRODUCT = "translate";
 const CACHE_TTL = 86400; // 24 hours (translations don't change)
-const LIBRE_URL = "https://libretranslate.com";
+
+// MyMemory — free translation API, no key required, 1000 words/day free tier
+// API docs: https://mymemory.translated.net/doc/spec.php
+const MYMEMORY_URL = "https://api.mymemory.translated.net";
 
 const translate = new Hono<{ Bindings: Env }>();
 
-// POST /api/translate — translate text
-translate.post("/", async (c) => {
+// POST /api/translate/text — translate text
+// Body: { q: string, source?: string (default "auto"), target: string (BCP-47 code e.g. "es", "fr", "zh") }
+translate.post("/text", async (c) => {
   const body = await c.req.json<{ q: string; source?: string; target: string }>();
   const { q, source, target } = body;
 
-  if (!q || !target) return c.json({ error: "Missing 'q' (text) and 'target' (language code)" }, 400);
+  if (!q || !target) return c.json({ error: "Missing 'q' (text) and 'target' (language code, e.g. 'es')" }, 400);
+  if (q.length > 500) return c.json({ error: "Text too long (maximum 500 characters per request)" }, 400);
 
-  const cacheKey = `translate:${source ?? "auto"}:${target}:${hashString(q)}`;
+  const srcLang = source ?? "auto";
+  const cacheKey = `translate:${srcLang}:${target}:${hashString(q)}`;
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const res = await fetchUpstream(`${LIBRE_URL}/translate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ q, source: source ?? "auto", target, format: "text" }),
-  });
+  // MyMemory langpair format: "source|target" (use "autodetect" for auto-detect)
+  const langpair = srcLang === "auto" ? `autodetect|${target}` : `${srcLang}|${target}`;
+  const url = `${MYMEMORY_URL}/get?q=${encodeURIComponent(q)}&langpair=${encodeURIComponent(langpair)}`;
+
+  const res = await fetchUpstream(url);
   const raw: any = await res.json();
+
+  if (raw.responseStatus !== 200) {
+    return c.json({ error: "Translation failed", detail: raw.responseDetails ?? raw.responseStatus }, 502);
+  }
 
   const data = {
     original: q,
-    translated: raw.translatedText,
-    source_language: raw.detectedLanguage?.language ?? source ?? "auto",
+    translated: raw.responseData.translatedText,
+    source_language: srcLang === "auto"
+      ? (raw.matches?.[0]?.source ?? "auto")
+      : srcLang,
     target_language: target,
-    confidence: raw.detectedLanguage?.confidence,
+    match_quality: raw.responseData.match,
   };
 
   await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
 
-// GET /api/translate/languages — list supported languages
+// GET /api/translate/languages — list supported language codes
 translate.get("/languages", async (c) => {
-  const cacheKey = "languages";
-  const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
-  if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
+  // MyMemory supports all ISO 639-1 language codes + regional variants.
+  // This is a curated static list of the most common ones.
+  const languages = [
+    { code: "af", name: "Afrikaans" }, { code: "sq", name: "Albanian" },
+    { code: "ar", name: "Arabic" }, { code: "hy", name: "Armenian" },
+    { code: "az", name: "Azerbaijani" }, { code: "eu", name: "Basque" },
+    { code: "be", name: "Belarusian" }, { code: "bn", name: "Bengali" },
+    { code: "bs", name: "Bosnian" }, { code: "bg", name: "Bulgarian" },
+    { code: "ca", name: "Catalan" }, { code: "hr", name: "Croatian" },
+    { code: "cs", name: "Czech" }, { code: "da", name: "Danish" },
+    { code: "nl", name: "Dutch" }, { code: "en", name: "English" },
+    { code: "et", name: "Estonian" }, { code: "tl", name: "Filipino" },
+    { code: "fi", name: "Finnish" }, { code: "fr", name: "French" },
+    { code: "gl", name: "Galician" }, { code: "ka", name: "Georgian" },
+    { code: "de", name: "German" }, { code: "el", name: "Greek" },
+    { code: "gu", name: "Gujarati" }, { code: "ht", name: "Haitian Creole" },
+    { code: "he", name: "Hebrew" }, { code: "hi", name: "Hindi" },
+    { code: "hu", name: "Hungarian" }, { code: "is", name: "Icelandic" },
+    { code: "id", name: "Indonesian" }, { code: "ga", name: "Irish" },
+    { code: "it", name: "Italian" }, { code: "ja", name: "Japanese" },
+    { code: "kn", name: "Kannada" }, { code: "kk", name: "Kazakh" },
+    { code: "ko", name: "Korean" }, { code: "lv", name: "Latvian" },
+    { code: "lt", name: "Lithuanian" }, { code: "mk", name: "Macedonian" },
+    { code: "ms", name: "Malay" }, { code: "ml", name: "Malayalam" },
+    { code: "mt", name: "Maltese" }, { code: "mr", name: "Marathi" },
+    { code: "mn", name: "Mongolian" }, { code: "ne", name: "Nepali" },
+    { code: "no", name: "Norwegian" }, { code: "fa", name: "Persian" },
+    { code: "pl", name: "Polish" }, { code: "pt", name: "Portuguese" },
+    { code: "ro", name: "Romanian" }, { code: "ru", name: "Russian" },
+    { code: "sr", name: "Serbian" }, { code: "sk", name: "Slovak" },
+    { code: "sl", name: "Slovenian" }, { code: "es", name: "Spanish" },
+    { code: "sw", name: "Swahili" }, { code: "sv", name: "Swedish" },
+    { code: "ta", name: "Tamil" }, { code: "te", name: "Telugu" },
+    { code: "th", name: "Thai" }, { code: "tr", name: "Turkish" },
+    { code: "uk", name: "Ukrainian" }, { code: "ur", name: "Urdu" },
+    { code: "uz", name: "Uzbek" }, { code: "vi", name: "Vietnamese" },
+    { code: "cy", name: "Welsh" }, { code: "yi", name: "Yiddish" },
+    { code: "zu", name: "Zulu" }, { code: "zh", name: "Chinese (Simplified)" },
+    { code: "zh-TW", name: "Chinese (Traditional)" },
+  ];
 
-  const res = await fetchUpstream(`${LIBRE_URL}/languages`);
-  const data = await res.json();
-
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, 86400);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
-});
-
-// GET /api/translate/detect — detect language
-translate.post("/detect", async (c) => {
-  const body = await c.req.json<{ q: string }>();
-  if (!body.q) return c.json({ error: "Missing 'q' (text)" }, 400);
-
-  const res = await fetchUpstream(`${LIBRE_URL}/detect`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ q: body.q }),
-  });
-  const data = await res.json();
-
-  return c.json({ product: PRODUCT, data, timestamp: new Date().toISOString() });
+  return c.json({
+    product: PRODUCT,
+    cached: false,
+    data: { count: languages.length, languages },
+    timestamp: new Date().toISOString(),
+  }, 200, { "Cache-Control": "public, max-age=86400" });
 });
 
 function hashString(str: string): string {
