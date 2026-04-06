@@ -39,7 +39,6 @@ const SPEC = {
     { name: "Property", description: "UK property intelligence" },
     { name: "Location", description: "UK address intelligence (flood, crime, amenities)" },
     { name: "Translate", description: "Text translation (LibreTranslate)" },
-    { name: "Jobs", description: "Job market & salary data (JSearch)" },
     { name: "Sentiment", description: "AI news sentiment analysis (Claude)" },
     { name: "Signals", description: "AI cross-market signals (Claude)" },
     { name: "Documents", description: "AI document summarisation (Claude)" },
@@ -832,63 +831,6 @@ const SPEC = {
           "200": { description: "Detected language" },
           "400": { $ref: "#/components/responses/BadRequest" },
           "402": { $ref: "#/components/responses/PaymentRequired" },
-        },
-      },
-    },
-
-    // ── Jobs ──────────────────────────────────────────────────────────────────
-    "/api/jobs/search": {
-      get: {
-        tags: ["Jobs"],
-        summary: "Search job listings",
-        description: "Live job postings by keyword and location via JSearch (aggregates Indeed, LinkedIn, Glassdoor, ZipRecruiter). **Price: $0.01 USDC**",
-        "x-price-usd": 0.01,
-        parameters: [
-          { name: "q", in: "query", required: true, schema: { type: "string" }, description: "Job title or keyword" },
-          { name: "location", in: "query", schema: { type: "string" }, description: "Location name" },
-          { name: "country", in: "query", schema: { type: "string", default: "gb" }, description: "2-letter country code" },
-          { name: "page", in: "query", schema: { type: "integer", default: 1 } },
-        ],
-        responses: {
-          "200": { description: "Job listings" },
-          "400": { $ref: "#/components/responses/BadRequest" },
-          "402": { $ref: "#/components/responses/PaymentRequired" },
-          "503": { $ref: "#/components/responses/ServiceUnavailable" },
-        },
-      },
-    },
-    "/api/jobs/salary": {
-      get: {
-        tags: ["Jobs"],
-        summary: "Salary range data",
-        description: "Salary ranges for a job title in a region. **Price: $0.01 USDC**",
-        "x-price-usd": 0.01,
-        parameters: [
-          { name: "q", in: "query", required: true, schema: { type: "string" }, description: "Job title" },
-          { name: "country", in: "query", schema: { type: "string", default: "gb" } },
-          { name: "location", in: "query", schema: { type: "string" } },
-        ],
-        responses: {
-          "200": { description: "Salary data" },
-          "400": { $ref: "#/components/responses/BadRequest" },
-          "402": { $ref: "#/components/responses/PaymentRequired" },
-          "503": { $ref: "#/components/responses/ServiceUnavailable" },
-        },
-      },
-    },
-    "/api/jobs/categories": {
-      get: {
-        tags: ["Jobs"],
-        summary: "Job categories",
-        description: "Available job categories for a country. **Price: $0.01 USDC**",
-        "x-price-usd": 0.01,
-        parameters: [
-          { name: "country", in: "query", schema: { type: "string", default: "gb" } },
-        ],
-        responses: {
-          "200": { description: "Job categories" },
-          "402": { $ref: "#/components/responses/PaymentRequired" },
-          "503": { $ref: "#/components/responses/ServiceUnavailable" },
         },
       },
     },

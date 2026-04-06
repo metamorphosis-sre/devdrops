@@ -41,8 +41,6 @@ import documents from "./routes/documents";
 import research from "./routes/research";
 import signals from "./routes/signals";
 
-// Group D: External service keys
-import jobs from "./routes/jobs";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -114,8 +112,6 @@ app.route("/api/documents", documents);
 app.route("/api/research", research);
 app.route("/api/signals", signals);
 
-// Group D: External services
-app.route("/api/jobs", jobs);
 
 // Catch-all for unmatched API routes
 app.all("/api/*", (c) => {
@@ -264,7 +260,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 
 <div class="container">
 <div class="stats">
-<div class="stat"><span class="stat-val">23</span><span class="stat-label">Data products</span></div>
+<div class="stat"><span class="stat-val">22</span><span class="stat-label">Data products</span></div>
 <div class="stat"><span class="stat-val">$0.001</span><span class="stat-label">Starting price</span></div>
 <div class="stat"><span class="stat-val">&lt;2s</span><span class="stat-label">Settlement</span></div>
 <div class="stat"><span class="stat-val">0</span><span class="stat-label">API keys needed</span></div>
@@ -331,11 +327,6 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="product">
 <div class="product-head"><span class="product-name">Academic papers</span><span class="product-price">$0.005</span></div>
 <p class="product-desc">Search academic literature via OpenAlex and Semantic Scholar. Abstracts, citations, DOIs, open access links.</p>
-<span class="product-tag tag-new">First x402-native</span>
-</div>
-<div class="product">
-<div class="product-head"><span class="product-name">Job market & salary data</span><span class="product-price">$0.01</span></div>
-<p class="product-desc">Job postings by role and location, salary ranges, hiring trends. Covers 16 countries via Adzuna.</p>
 <span class="product-tag tag-new">First x402-native</span>
 </div>
 <div class="product">

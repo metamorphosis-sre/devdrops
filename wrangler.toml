@@ -48,4 +48,3 @@ vars = { ENVIRONMENT = "production", NETWORK = "eip155:8453", FACILITATOR_URL = 
 # ODDS_API_KEY             — The Odds API key (free tier / $35/mo)
 # COMPANIES_HOUSE_API_KEY  — UK Companies House API key (free)
 # ANTHROPIC_API_KEY        — Claude API key (for sentiment, documents, research, signals)
-# JSEARCH_API_KEY          — JSearch via RapidAPI (rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) API key (free tier)
