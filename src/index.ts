@@ -12,6 +12,7 @@ import { handleScheduled } from "./cron/handler";
 // Free routes
 import health from "./routes/health";
 import catalog from "./routes/catalog";
+import openapi from "./routes/openapi";
 
 // Group A: Free APIs (no key needed)
 import fx from "./routes/fx";
@@ -56,6 +57,7 @@ app.get("/", (c) => c.html(LANDING_HTML));
 // Free routes (no payment required)
 app.route("/health", health);
 app.route("/catalog", catalog);
+app.route("/openapi.json", openapi);
 
 // x402 payment middleware on all /api/* routes
 // Skipped in development (facilitator requires on-chain scheme registration)
