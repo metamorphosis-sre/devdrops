@@ -79,6 +79,8 @@ app.use("/api/*", async (c, next) => {
   }
   const facilitator = new HTTPFacilitatorClient(facilitatorConfig as any);
   const schemes = [{ network, server: new ExactEvmScheme() }];
+  // @x402/extensions/bazaar is dynamically imported by the middleware when extensions.bazaar
+  // is present in route configs — esbuild bundles the import; errors are caught and logged.
   const middleware = paymentMiddlewareFromConfig(routes as any, facilitator, schemes as any);
   return middleware(c, next);
 });

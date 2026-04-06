@@ -1,4 +1,5 @@
 import type { PricingMap } from "../types";
+import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
 
 // Central pricing map for all DevDrops products.
 // Add new product routes here — the x402 middleware reads this to set per-route prices.
@@ -33,15 +34,27 @@ export const pricingMap: PricingMap = {
   "POST /api/research/*": { price: "$0.10", description: "AI research brief generator" },
 
   // Expansion products
-  "POST /api/translate/*": { price: "$0.005", description: "Text translation — 100+ languages" },
+  "POST /api/translate/*": { price: "$0.005", description: "Text translation — 70+ languages" },
   "GET /api/email-verify/*": { price: "$0.005", description: "Email address verification" },
 };
 
 // Build the x402 routes config from the pricing map.
+// Each route gets bazaar discovery extensions so it appears in CDP's Bazaar discovery index.
 export function buildX402Routes(payTo: string, network: string) {
-  const routes: Record<string, { accepts: { scheme: string; price: string; network: string; payTo: string }; description: string }> = {};
+  const routes: Record<string, {
+    accepts: { scheme: string; price: string; network: string; payTo: string };
+    description: string;
+    extensions: Record<string, unknown>;
+  }> = {};
 
   for (const [route, config] of Object.entries(pricingMap)) {
+    const [method] = route.split(" ");
+    const isPost = method === "POST";
+
+    const extensions = isPost
+      ? declareDiscoveryExtension({ bodyType: "json" })
+      : declareDiscoveryExtension({});
+
     routes[route] = {
       accepts: {
         scheme: "exact",
@@ -50,6 +63,7 @@ export function buildX402Routes(payTo: string, network: string) {
         payTo,
       },
       description: config.description,
+      extensions,
     };
   }
 
