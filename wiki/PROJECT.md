@@ -6,10 +6,10 @@
 
 ## Overview
 
-**DevDrops** (`devdrops.run`) is a suite of 25 pay-per-query data APIs powered by the x402 micropayment protocol. AI agents and developers send a standard HTTP request, receive an HTTP 402 response with a USDC price, pay on Base (Coinbase's L2), and instantly receive structured JSON data. No API keys, no subscriptions, no accounts.
+**DevDrops** (`devdrops.run`) is a suite of 22 pay-per-query data APIs powered by the x402 micropayment protocol. AI agents and developers send a standard HTTP request, receive an HTTP 402 response with a USDC price, pay on Base (Coinbase's L2), and instantly receive structured JSON data. No API keys, no subscriptions, no accounts.
 
-**Live URL:** https://devdrops-api.pchawla.workers.dev  
-**Production domain (pending):** https://api.devdrops.run  
+**Live URL:** https://api.devdrops.run  
+**Staging:** https://devdrops-api.pchawla.workers.dev  
 **GitHub:** https://github.com/metamorphosis-sre/devdrops (private)
 
 ---
@@ -57,14 +57,14 @@ src/
 │   ├── cache.ts          — D1 cache read/write helpers
 │   ├── fetch.ts          — Upstream fetch wrapper with timeout + error types
 │   └── cdp-auth.ts       — Coinbase CDP JWT auth (Ed25519, 64-byte raw key format)
-├── routes/               — 25 product routers (one file per product)
+├── routes/               — 22 product routers + catalog + health + openapi
 ├── cron/
 │   ├── handler.ts        — Scheduled event dispatcher
 │   ├── health-check.ts   — Pings all data_sources, auto-failover on 3 failures
 │   └── backup.ts         — Nightly D1 → R2 export (skips gracefully if R2 not configured)
 └── db/
     ├── schema.sql        — 5 tables: transactions, abandoned_402s, health_log, data_sources, product_cache
-    └── seeds.sql         — 29 upstream API health-check URLs (one per product + backups)
+    └── seeds.sql         — Upstream API health-check URLs (one per product + backups)
 ```
 
 ### D1 Schema
@@ -74,7 +74,7 @@ src/
 | `transactions` | Every paid x402 request: product, amount, wallet, endpoint, latency |
 | `abandoned_402s` | Requests that saw the price but didn't pay |
 | `health_log` | Per-source health check results (every 30 min) |
-| `data_sources` | Upstream API registry with auto-failover (29 rows seeded) |
+| `data_sources` | Upstream API registry with auto-failover |
 | `product_cache` | Generic TTL cache per product/key |
 
 ### Cron Triggers
@@ -86,13 +86,13 @@ src/
 
 ---
 
-## Products (25)
+## Products (22)
 
 ### Tier 1 — Domain Expertise
 
 | # | Product | Endpoint | Price | Status |
 |---|---|---|---|---|
-| 1 | Property intelligence | `GET /api/property/*` | $0.01–$0.05 | Live (402) |
+| 1 | Property intelligence | `GET /api/property/*` | $0.01 | Live (402) |
 | 2 | Property MCP server | `GET /api/property/mcp/*` | $0.01 | Live (402) |
 | 3 | Address intelligence | `GET /api/location/*` | $0.02 | Live (402) |
 
@@ -108,25 +108,30 @@ src/
 | 9 | Domain intelligence | `GET /api/domain/*` | $0.005 | RDAP / DNS / crt.sh | Live (402) |
 | 10 | Weather data | `GET /api/weather/*` | $0.001 | OpenWeatherMap | Live (402) |
 | 11 | FX rates | `GET /api/fx/*` | $0.001 | Frankfurter (ECB) | Live (402) |
-| 12 | IP geolocation | `GET /api/ip/*` | $0.001 | IPinfo.io (commercial OK) | Live (402) |
+| 12 | IP geolocation | `GET /api/ip/*` | $0.001 | IPinfo.io | Live (402) |
 | 13 | Historical events | `GET /api/history/*` | $0.001 | Wikipedia On This Day | Live (402) |
 | 14 | Academic papers | `GET /api/papers/*` | $0.005 | OpenAlex + Semantic Scholar | Live (402) |
 | 15 | Food & nutrition | `GET /api/food/*` | $0.005 | Open Food Facts | Live (402) |
 | 16 | Public tenders | `GET /api/tenders/*` | $0.01 | UK Contracts Finder + SAM.gov | Live (402) |
 | 17 | Email verification | `GET /api/email-verify/*` | $0.005 | DNS MX (self-contained) | Live (402) |
-| 18 | Flight search | `GET /api/flights/*` | $0.01 | Amadeus | 503 (key needed) |
-| 19 | Job market | `GET /api/jobs/*` | $0.01 | Adzuna | 503 (key needed) |
-| 20 | Shipping rates | `GET /api/shipping/*` | $0.01 | EasyPost | 503 (key needed) |
-| 21 | Text translation | `POST /api/translate/*` | $0.005 | LibreTranslate | Live (402) |
+| 18 | Text translation | `POST /api/translate/*` | $0.005 | LibreTranslate | Live (402) |
 
 ### Tier 3 — AI-Enhanced (Claude API)
 
 | # | Product | Endpoint | Price | Status |
 |---|---|---|---|---|
-| 22 | News sentiment | `GET /api/sentiment/*` | $0.02 | Live (402) |
-| 23 | Cross-market signals | `GET /api/signals/*` | $0.05 | Live (402) |
-| 24 | Document summariser | `POST /api/documents/*` | $0.10 | Live (402) |
-| 25 | Research brief | `GET /api/research/*` | $0.10 | Live (402) |
+| 19 | News sentiment | `GET /api/sentiment/*` | $0.02 | Live (402) |
+| 20 | Cross-market signals | `GET /api/signals/*` | $0.05 | Live (402) |
+| 21 | Document summariser | `POST /api/documents/*` | $0.10 | Live (402) |
+| 22 | Research brief | `GET /api/research/*` | $0.10 | Live (402) |
+
+### Dropped Products
+
+| Product | Reason |
+|---|---|
+| Flights | Amadeus signup closed; no viable free-tier alternative |
+| Jobs | All job search APIs have restrictive commercial terms or 14-day trials |
+| Shipping | No free-tier multi-carrier rate API; EasyPost/Shippo require paid plans |
 
 ---
 
@@ -151,11 +156,6 @@ src/
 | `WEATHER_API_KEY` | OpenWeatherMap | ✅ Set |
 | `ODDS_API_KEY` | The Odds API | ✅ Set |
 | `COMPANIES_HOUSE_API_KEY` | UK Companies House | ✅ Set |
-| `AMADEUS_API_KEY` | Amadeus (flights) | ❌ Not set |
-| `AMADEUS_API_SECRET` | Amadeus (flights) | ❌ Not set |
-| `ADZUNA_APP_ID` | Adzuna (jobs) | ❌ Not set |
-| `ADZUNA_API_KEY` | Adzuna (jobs) | ❌ Not set |
-| `EASYPOST_API_KEY` | EasyPost (shipping) | ❌ Not set |
 
 ### Cloudflare Bindings
 
@@ -163,7 +163,7 @@ src/
 |---|---|---|
 | `DB` | D1 database `devdrops` (ID: `dc92b44a-...`) | ✅ Active |
 | `CACHE` | KV namespace (ID: `7973d723-...`) | ✅ Active |
-| `STORAGE` | R2 bucket `devdrops-backups` | ❌ Pending — R2 not enabled on account yet (Cloudflare support ticket open) |
+| `STORAGE` | R2 bucket `devdrops-backups` | ❌ Pending — Cloudflare support ticket open |
 
 ---
 
@@ -172,7 +172,7 @@ src/
 ### Commands
 
 ```bash
-# Deploy (default environment)
+# Deploy
 npx wrangler deploy --env=""
 
 # Initialize D1 schema
@@ -195,44 +195,46 @@ npx wrangler secret list --env=""
 
 | URL | Description |
 |---|---|
-| `https://devdrops-api.pchawla.workers.dev` | Landing page |
-| `https://devdrops-api.pchawla.workers.dev/health` | Health check (D1, KV, R2) |
-| `https://devdrops-api.pchawla.workers.dev/catalog` | Machine-readable API catalog |
-| `https://devdrops-api.pchawla.workers.dev/api/*` | All paid endpoints (returns 402) |
+| `https://api.devdrops.run` | Landing page |
+| `https://api.devdrops.run/health` | Health check (D1, KV, R2) |
+| `https://api.devdrops.run/catalog` | Machine-readable API catalog |
+| `https://api.devdrops.run/openapi.json` | OpenAPI 3.1 spec |
+| `https://api.devdrops.run/api/*` | All paid endpoints (returns 402) |
 
 ---
 
 ## Key Technical Decisions
 
 ### 1. CDP facilitator over x402.org facilitator
-The free x402.org facilitator only supports Base Sepolia (testnet). For Base mainnet, Coinbase's CDP facilitator (`api.cdp.coinbase.com/platform/v2/x402`) is required. This needs a CDP portal API key with EdDSA auth.
+The free x402.org facilitator only supports Base Sepolia (testnet). For Base mainnet, Coinbase's CDP facilitator (`api.cdp.coinbase.com/platform/v2/x402`) is required.
 
 ### 2. Ed25519 (EdDSA), not P-256 (ES256)
-New CDP API keys from `portal.cdp.coinbase.com` use Ed25519 (64-byte raw format: first 32 bytes = seed, last 32 bytes = public key). The JWT header must specify `"alg": "EdDSA"`. Older CDP keys used P-256/ES256 PEM format.
+New CDP API keys from `portal.cdp.coinbase.com` use Ed25519 (64-byte raw format: first 32 bytes = seed, last 32 bytes = public key). The JWT header must specify `"alg": "EdDSA"`.
 
 ### 3. R2 is optional — backup job gracefully skips
-R2 binding commented out in `wrangler.toml` until Cloudflare support enables it. `STORAGE` typed as `R2Bucket | undefined` in `Env`. Backup cron checks for it and skips with a log message rather than crashing.
+R2 binding commented out in `wrangler.toml` until Cloudflare support enables it. `STORAGE` typed as `R2Bucket | undefined`. Backup cron checks for it and skips with a log message rather than crashing.
 
 ### 4. ip-api.com replaced with IPinfo.io
 ip-api.com's free tier is non-commercial only. IPinfo.io's free tier (50K lookups/month) explicitly allows commercial use.
 
 ### 5. Payment middleware instantiated per-request
-`paymentMiddlewareFromConfig` is called on every `/api/*` request rather than at app startup. This is because Cloudflare Workers don't have persistent startup state and the facilitator `initialize()` call (which hits CDP to fetch supported payment kinds) must happen within request context where `env` bindings are available.
+`paymentMiddlewareFromConfig` is called on every `/api/*` request rather than at app startup. Cloudflare Workers don't have persistent startup state; the facilitator `initialize()` call must happen within request context where `env` bindings are available.
 
 ### 6. `ENVIRONMENT=development` bypasses payment
-Setting `ENVIRONMENT=development` in wrangler.toml skips the x402 middleware entirely — useful for local testing with `wrangler dev`. Currently set to `production` in the deployed Worker.
+Setting `ENVIRONMENT=development` in wrangler.toml skips the x402 middleware entirely — useful for local testing with `wrangler dev`.
+
+### 7. Flights, jobs, shipping dropped
+All three required third-party API keys with either closed signups (Amadeus), restrictive commercial terms (job search APIs), or no viable free-tier multi-carrier option (shipping). Dropped to keep all 22 products fully live with no 503s.
 
 ---
 
 ## Data Source Decisions (Errata)
 
-Per `docs/devdrops-errata-final.md`:
-
 | Product | Original Source | Replaced With | Reason |
 |---|---|---|---|
 | Weather | Open-Meteo | OpenWeatherMap | Open-Meteo free tier is non-commercial |
 | IP lookup | ip-api.com | IPinfo.io | ip-api.com free tier is non-commercial |
-| Email verify | Full SMTP | Syntax + MX + disposable only | Port 25 blocked on Workers; SMTP deliverability unreliable |
+| Email verify | Full SMTP | Syntax + MX + disposable only | Port 25 blocked on Workers |
 
 ---
 
@@ -240,25 +242,21 @@ Per `docs/devdrops-errata-final.md`:
 
 | Priority | Task | Notes |
 |---|---|---|
-| High | Custom domain `api.devdrops.run` | Point to Worker in Cloudflare dashboard |
-| High | OpenAPI spec at `/openapi.json` | Critical for Bazaar agent discovery |
-| High | x402 Bazaar registration | PR to `coinbase/x402` ecosystem page |
-| Medium | R2 bucket activation | Waiting on Cloudflare support |
-| Medium | Amadeus, Adzuna, EasyPost keys | Unlocks flights, jobs, shipping |
-| Medium | `devdrops.run` landing page | On Cloudflare Pages (separate from Worker) |
-| Low | Stripe MPP payment rail | Apply for early access; UK entity = card payments only for stablecoins |
+| High | R2 bucket activation | Waiting on Cloudflare support ticket |
+| Medium | `devdrops.run` landing page | Cloudflare Pages site (separate from Worker) |
+| Medium | x402 Bazaar listing approval | PR open: coinbase/x402#38 |
 | Low | Property MCP server manifest | MCP tools declared, no manifest file yet |
+| Low | Bankr marketplace submission | Submit endpoints |
+| Low | awesome-x402 GitHub list | Submit PR |
 
 ---
 
-## Discovery Channels (to register)
+## Discovery Channels
 
-- [ ] x402 Bazaar (Coinbase CDP) — `discoverable: true` in middleware config
+- [ ] x402 Bazaar — PR open at coinbase/x402#38
 - [ ] x402scan.com — auto-appears after first paid transaction
 - [ ] Bankr marketplace — submit endpoints
-- [ ] Stripe MPP service directory — pending MPP early access
 - [ ] MCP registry — for Property MCP server (#2)
-- [ ] PR to `coinbase/x402` repo ecosystem page
 - [ ] awesome-x402 GitHub list
 
 ---
@@ -279,16 +277,13 @@ Per `docs/devdrops-errata-final.md`:
 
 | Date | Change |
 |---|---|
-| 2026-04-06 | Initial build: all 25 routes, middleware, D1 schema, cron jobs |
+| 2026-04-06 | Initial build: all routes, middleware, D1 schema, cron jobs |
 | 2026-04-06 | Fixed ip-api.com → IPinfo.io (commercial licensing) |
-| 2026-04-06 | Fixed extractPrice in logging middleware |
 | 2026-04-06 | R2 binding commented out pending Cloudflare support |
-| 2026-04-06 | Landing page updated to 25 products, wired into Worker |
-| 2026-04-06 | data_sources table seeded with 29 upstream health-check URLs |
-| 2026-04-06 | PAY_TO_ADDRESS set to `0xc42E…79D2` |
 | 2026-04-06 | Secrets set: ANTHROPIC, WEATHER, ODDS, COMPANIES_HOUSE, CDP credentials |
-| 2026-04-06 | Added `@x402/evm` ExactEvmScheme registration |
-| 2026-04-06 | Switched to Coinbase CDP facilitator (mainnet) |
-| 2026-04-06 | Diagnosed CDP key as Ed25519 (not P-256) — fixed cdp-auth.ts |
 | 2026-04-06 | HTTP 402 confirmed working on all `/api/*` routes |
-| 2026-04-06 | GitHub repo created, initial commit |
+| 2026-04-06 | GitHub repo created, initial commit pushed |
+| 2026-04-06 | Added OpenAPI 3.1 spec at `/openapi.json` |
+| 2026-04-06 | Custom domain `api.devdrops.run` activated |
+| 2026-04-06 | coinbase/x402#38 opened — Bazaar ecosystem listing |
+| 2026-04-06 | Dropped flights, jobs, shipping — 22 live products |
