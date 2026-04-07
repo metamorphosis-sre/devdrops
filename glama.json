@@ -1,4 +1,25 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
-  "maintainers": ["metamorphosis-sre"]
+  "name": "DevDrops Property MCP",
+  "description": "UK property intelligence via MCP — search transaction prices by postcode, look up company property charges, and query the UK House Price Index. Paid per query via x402 micropayments on Base mainnet (USDC). No API key or account required.",
+  "maintainers": ["metamorphosis-sre"],
+  "license": "MIT",
+  "tools": [
+    {
+      "name": "get_uk_property_prices",
+      "description": "Search UK property transaction prices by postcode. Returns recent sales with price paid, date, property type, tenure (freehold/leasehold), and full address from HM Land Registry."
+    },
+    {
+      "name": "get_uk_company_property_charges",
+      "description": "Look up property charges (mortgages and secured loans) registered against a UK company via Companies House. Useful for due diligence and beneficial ownership research."
+    },
+    {
+      "name": "get_uk_house_price_index",
+      "description": "Get the UK House Price Index (HPI) for a region. Returns average prices, annual and monthly percentage changes, and sales volumes for up to 12 months."
+    }
+  ],
+  "links": {
+    "homepage": "https://devdrops.run",
+    "repository": "https://github.com/metamorphosis-sre/devdrops"
+  }
 }
