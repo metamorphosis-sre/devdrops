@@ -69,6 +69,13 @@ app.route("/catalog", catalog);
 app.route("/openapi.json", openapi);
 app.route("/.well-known", wellKnown);
 
+// Internal admin routes (no payment — not in pricing map)
+app.get("/api/sanctions/refresh", async (c) => {
+  const { refreshSanctionsList } = await import("./routes/sanctions");
+  const count = await refreshSanctionsList(c.env.CACHE);
+  return c.json({ refreshed: true, entries_loaded: count, timestamp: new Date().toISOString() });
+});
+
 // x402 payment middleware on all /api/* routes
 // Skipped in development (facilitator requires on-chain scheme registration)
 app.use("/api/*", async (c, next) => {
