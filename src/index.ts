@@ -8,6 +8,7 @@ import { buildX402Routes } from "./middleware/payment";
 import { corsMiddleware } from "./middleware/cors";
 import { transactionLogger } from "./middleware/logging";
 import { FREE_TIER_PREFIXES, FREE_QUERIES_PER_DAY, FREE_TIER_KV_TTL } from "./middleware/freetier";
+
 import { handleScheduled } from "./cron/handler";
 import { UpstreamError } from "./lib/fetch";
 
