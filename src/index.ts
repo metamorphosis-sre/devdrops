@@ -79,6 +79,8 @@ app.route("/health", health);
 app.route("/catalog", catalog);
 app.route("/openapi.json", openapi);
 app.route("/.well-known", wellKnown);
+// llms.txt at root for AI assistant discovery
+app.get("/llms.txt", (c) => c.redirect("/.well-known/llms.txt", 301));
 
 // Admin route — outside /api/* so payment middleware never runs
 app.get("/admin/sanctions/refresh", async (c) => {
