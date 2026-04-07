@@ -575,7 +575,7 @@ curl https://api.devdrops.run/api/fx/latest<br><br>
 &nbsp;·&nbsp;
 <a href="/openapi.json" style="color:var(--text3)">OpenAPI</a>
 &nbsp;·&nbsp;
-<a href="https://github.com/metamorphosis-sre/devdrops/issues" style="color:var(--text3)">Issues</a>
+<a href="/catalog" style="color:var(--text3)">Catalog</a>
 &nbsp;·&nbsp;
 x402 · Base · Cloudflare
 </span>
