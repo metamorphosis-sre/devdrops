@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.metamorphosis-sre/devdrops",
+  "description": "36 pay-per-query data APIs for AI agents. USDC via x402 on Base. No accounts needed.",
+  "repository": {
+    "url": "https://github.com/metamorphosis-sre/devdrops",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "devdrops-mcp",
+      "version": "1.0.0",
+      "transport": {
+        "type": "streamable-http",
+        "url": "https://api.devdrops.run/api/property/mcp"
+      },
+      "environmentVariables": []
+    }
+  ]
+}

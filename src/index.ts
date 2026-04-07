@@ -7,6 +7,7 @@ import type { Env } from "./types";
 import { buildX402Routes } from "./middleware/payment";
 import { corsMiddleware } from "./middleware/cors";
 import { transactionLogger } from "./middleware/logging";
+import { freeTierMiddleware } from "./middleware/freetier";
 import { handleScheduled } from "./cron/handler";
 import { UpstreamError } from "./lib/fetch";
 
@@ -89,12 +90,21 @@ app.get("/admin/sanctions/refresh", async (c) => {
   return c.json({ refreshed: true, entries_loaded: count, timestamp: new Date().toISOString() });
 });
 
+// Free tier — 5 queries/day/IP on utility endpoints, no payment required
+// Runs before the x402 middleware so eligible requests skip payment entirely
+app.use("/api/*", freeTierMiddleware);
+
 // x402 payment middleware on all /api/* routes
 // Skipped in development (facilitator requires on-chain scheme registration)
 app.use("/api/*", async (c, next) => {
   // MCP capability discovery (GET exact path) must be free — agents need to discover
   // tools before they can fund a wallet. POST (JSON-RPC tool calls) stays gated.
   if (c.req.method === "GET" && c.req.path === "/api/property/mcp") {
+    return next();
+  }
+
+  // Free tier already handled this request — skip payment
+  if ((c as any).get?.("freeTierUsed")) {
     return next();
   }
 
