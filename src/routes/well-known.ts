@@ -10,26 +10,186 @@ wellKnown.get("/mcp/server-card.json", (c) => {
     serverInfo: { name: "devdrops", version: "1.0.0" },
     description: "43 pay-per-query data APIs as MCP tools. Weather, FX, stocks, crypto, SEC filings, sanctions, sentiment, research, IP, and more. Pay $0.01 USDC per call via x402 on Base mainnet. Free discovery.",
     authentication: { required: false },
-    payment: { type: "x402", network: "eip155:8453", currency: "USDC", pricePerCall: "0.01" },
+    resources: [],
+    prompts: [],
     tools: [
-      { name: "get_weather", description: "Current weather or 5-day forecast" },
-      { name: "get_fx_rate", description: "Currency exchange rates and conversion" },
-      { name: "get_crypto_price", description: "Live crypto prices (2000+ tokens)" },
-      { name: "get_stock_quote", description: "Stock quotes (10,000+ tickers)" },
-      { name: "search_papers", description: "Academic paper search (OpenAlex)" },
-      { name: "search_filings", description: "SEC EDGAR filing search" },
-      { name: "get_company_filings", description: "Company SEC filings by ticker" },
-      { name: "get_ip_info", description: "IP geolocation" },
-      { name: "analyze_sentiment", description: "AI news sentiment analysis" },
-      { name: "get_odds", description: "Sports betting odds" },
-      { name: "search_food", description: "Food nutrition data" },
-      { name: "get_domain_info", description: "WHOIS and DNS info" },
-      { name: "verify_vat", description: "EU/UK VAT verification" },
-      { name: "check_sanctions", description: "Sanctions screening (OFAC/UN/HMT)" },
-      { name: "get_history_today", description: "Historical events today" },
-      { name: "generate_qr", description: "QR code generation" },
-      { name: "research_topic", description: "AI research brief" },
-      { name: "summarize_url", description: "AI web page summarization" },
+      {
+        name: "get_weather",
+        description: "Get current weather conditions or 5-day forecast for a city or coordinates",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city: { type: "string", description: "City name (e.g. London)" },
+            lat: { type: "number", description: "Latitude" },
+            lon: { type: "number", description: "Longitude" },
+            forecast: { type: "boolean", description: "Return 5-day forecast instead of current" },
+          },
+        },
+      },
+      {
+        name: "get_fx_rate",
+        description: "Get currency exchange rates or convert between currencies (33 major currencies)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            from: { type: "string", description: "Source currency (e.g. USD)" },
+            to: { type: "string", description: "Target currency (e.g. GBP)" },
+            amount: { type: "number", description: "Amount to convert (default 1)" },
+          },
+          required: ["from", "to"],
+        },
+      },
+      {
+        name: "get_crypto_price",
+        description: "Get live cryptocurrency price and market data (2000+ tokens)",
+        inputSchema: {
+          type: "object",
+          properties: { symbol: { type: "string", description: "Crypto symbol (e.g. bitcoin)" } },
+          required: ["symbol"],
+        },
+      },
+      {
+        name: "get_stock_quote",
+        description: "Get a live stock quote by ticker symbol (10,000+ tickers)",
+        inputSchema: {
+          type: "object",
+          properties: { symbol: { type: "string", description: "Ticker symbol (e.g. AAPL)" } },
+          required: ["symbol"],
+        },
+      },
+      {
+        name: "search_papers",
+        description: "Search academic papers — titles, abstracts, citations, DOIs (OpenAlex, 250M+ papers)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: { type: "string", description: "Search query" },
+            page: { type: "number", description: "Page number (default 1)" },
+          },
+          required: ["query"],
+        },
+      },
+      {
+        name: "search_filings",
+        description: "Search SEC EDGAR filings full-text (10-K, 10-Q, 8-K)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: { type: "string", description: "Search query" },
+            forms: { type: "string", description: "Form types (e.g. 10-K,10-Q)" },
+          },
+          required: ["query"],
+        },
+      },
+      {
+        name: "get_company_filings",
+        description: "Get recent SEC filings for a company by ticker",
+        inputSchema: {
+          type: "object",
+          properties: { ticker: { type: "string", description: "Stock ticker (e.g. AAPL)" } },
+          required: ["ticker"],
+        },
+      },
+      {
+        name: "get_ip_info",
+        description: "Get geolocation info for an IP address (country, city, ISP, coordinates)",
+        inputSchema: {
+          type: "object",
+          properties: { ip: { type: "string", description: "IP address (omit for caller's IP)" } },
+        },
+      },
+      {
+        name: "analyze_sentiment",
+        description: "AI-powered news sentiment analysis on any topic using Claude",
+        inputSchema: {
+          type: "object",
+          properties: { topic: { type: "string", description: "Topic to analyze (e.g. Tesla stock)" } },
+          required: ["topic"],
+        },
+      },
+      {
+        name: "get_odds",
+        description: "Get sports betting odds from multiple bookmakers",
+        inputSchema: {
+          type: "object",
+          properties: { sport: { type: "string", description: "Sport key (e.g. soccer_epl, basketball_nba)" } },
+          required: ["sport"],
+        },
+      },
+      {
+        name: "search_food",
+        description: "Search food nutrition data — calories, allergens, ingredients (3M+ products)",
+        inputSchema: {
+          type: "object",
+          properties: { query: { type: "string", description: "Food search query (e.g. banana)" } },
+          required: ["query"],
+        },
+      },
+      {
+        name: "get_domain_info",
+        description: "Get WHOIS, DNS records, SSL certificate info for a domain",
+        inputSchema: {
+          type: "object",
+          properties: { domain: { type: "string", description: "Domain name (e.g. example.com)" } },
+          required: ["domain"],
+        },
+      },
+      {
+        name: "verify_vat",
+        description: "Verify an EU or UK VAT number via VIES and HMRC",
+        inputSchema: {
+          type: "object",
+          properties: { number: { type: "string", description: "VAT number (e.g. GB123456789)" } },
+          required: ["number"],
+        },
+      },
+      {
+        name: "check_sanctions",
+        description: "Check a name against global sanctions lists (OFAC, UN Security Council, UK HMT)",
+        inputSchema: {
+          type: "object",
+          properties: { name: { type: "string", description: "Name to check" } },
+          required: ["name"],
+        },
+      },
+      {
+        name: "get_history_today",
+        description: "Get historical events that happened on today's date (Wikipedia)",
+        inputSchema: { type: "object", properties: {} },
+      },
+      {
+        name: "generate_qr",
+        description: "Generate a QR code from text or URL",
+        inputSchema: {
+          type: "object",
+          properties: {
+            data: { type: "string", description: "Text or URL to encode" },
+            format: { type: "string", description: "Output format: svg, png, or json (default json)" },
+          },
+          required: ["data"],
+        },
+      },
+      {
+        name: "research_topic",
+        description: "AI research brief — synthesizes news, academic papers, and Wikipedia into a briefing",
+        inputSchema: {
+          type: "object",
+          properties: { topic: { type: "string", description: "Research topic" } },
+          required: ["topic"],
+        },
+      },
+      {
+        name: "summarize_url",
+        description: "Fetch and summarize any web page using AI",
+        inputSchema: {
+          type: "object",
+          properties: {
+            url: { type: "string", description: "URL to summarize" },
+            length: { type: "string", description: "Summary length: short, medium, long (default medium)" },
+          },
+          required: ["url"],
+        },
+      },
     ],
   }, 200, { "Cache-Control": "public, max-age=86400" });
 });
