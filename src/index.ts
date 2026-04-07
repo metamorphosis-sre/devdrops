@@ -56,6 +56,10 @@ import extract from "./routes/extract";
 import sanctions from "./routes/sanctions";
 import company from "./routes/company";
 
+// Group F: Network intelligence + macro data
+import asn from "./routes/asn";
+import economy from "./routes/economy";
+
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -115,7 +119,7 @@ app.use("/api/*", async (c, next) => {
 // Transaction logging (runs after payment middleware)
 app.use("/api/*", transactionLogger);
 
-// Mount all 22 product routers
+// Mount all 30 product routers
 // Group A: Free APIs
 app.route("/api/fx", fx);
 app.route("/api/history", history);
@@ -155,6 +159,10 @@ app.route("/api/stocks", stocks);
 app.route("/api/extract", extract);
 app.route("/api/sanctions", sanctions);
 app.route("/api/company", company);
+
+// Group F: Network intelligence + macro data
+app.route("/api/asn", asn);
+app.route("/api/economy", economy);
 
 // Catch-all for unmatched API routes
 app.all("/api/*", (c) => {

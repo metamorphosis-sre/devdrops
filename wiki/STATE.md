@@ -1,16 +1,16 @@
 # DevDrops — Current State
 
-> Last updated: 2026-04-06
+> Last updated: 2026-04-07
 
 ---
 
 ## Summary
 
-DevDrops launched with 25 planned modules. After research and viability checks, **22 are live** and **3 were dropped**. All 22 live modules return HTTP 402 with a USDC price on Base mainnet, verified working.
+DevDrops launched with 25 planned modules. After research and viability checks, **30 are live** and **3 were dropped**. All 30 live modules return HTTP 402 with a USDC price on Base mainnet, verified working.
 
 ---
 
-## Live Modules (22)
+## Live Modules (30)
 
 ### Tier 1 — Domain Expertise
 
@@ -160,6 +160,76 @@ All four products in this tier call the Anthropic Claude API (`claude-opus-4-6` 
 - **Price:** $0.10 per query
 - **Data source:** Multi-source fetch + Claude API synthesis
 - **Why kept:** Premium product. Produces structured research briefs on any topic. Best showcase for AI agent capabilities.
+
+---
+
+### Tier 4 — Expanded Utility & Intelligence (8 new modules)
+
+#### 23. QR Code Generator
+- **Endpoint:** `GET /api/qr/*`
+- **Price:** $0.001 per query
+- **Data source:** qrserver.com (free, no key)
+- **Why kept:** Zero upstream cost. Universal utility — payment links, contact cards, tickets.
+
+#### 24. Crypto Prices
+- **Endpoint:** `GET /api/crypto/*`
+- **Price:** $0.001 per query
+- **Data source:** CoinCap API (free, no key)
+- **Why kept:** Core x402 audience is crypto-native. 2000+ tokens, market data, exchange markets, historical OHLCV.
+
+#### 25. Timezone & Holidays
+- **Endpoint:** `GET /api/time/*`
+- **Price:** $0.001 per query
+- **Data source:** JS Intl API + Nager.Date (free, 100+ countries)
+- **Why kept:** Zero upstream cost. Scheduling agents, outreach tools, meeting planners.
+
+#### 26. VAT Verification
+- **Endpoint:** `GET /api/vat/*`
+- **Price:** $0.01 per query
+- **Data source:** EU VIES REST API + UK HMRC (both free, no key)
+- **Why kept:** Zero cost. B2B invoicing agents, KYB compliance, e-commerce. Covers all EU member states + UK.
+
+#### 27. Stock Prices
+- **Endpoint:** `GET /api/stocks/*`
+- **Price:** $0.005 per query
+- **Data source:** Yahoo Finance unofficial API (free, no key)
+- **Why kept:** Was the first Bazaar listing (proven demand). 10,000+ tickers, history, search, movers.
+- **Notes:** Add "Not financial advice" disclaimer. Yahoo Finance unofficial — use as-is, fallback if needed.
+
+#### 28. URL Content Extractor
+- **Endpoint:** `GET /api/extract/*`
+- **Price:** $0.005 per query
+- **Data source:** Self-contained fetch + HTML parsing (no upstream)
+- **Why kept:** Confirmed top-4 x402 demand category. Clean text, title, author, publish date, metadata from any URL.
+
+#### 29. Sanctions Screening
+- **Endpoint:** `GET /api/sanctions/*`
+- **Price:** $0.05 per query
+- **Data source:** OFAC SDN, UN Security Council, UK HMT (all free government lists)
+- **Why kept:** Highest per-query price outside AI tier. Enterprise compliance demand. No x402 alternative exists.
+- **Notes:** Fuzzy name matching with configurable threshold. Lists refreshed via cron.
+
+#### 30. Company Enrichment
+- **Endpoint:** `GET /api/company/*`
+- **Price:** $0.02 per query
+- **Data source:** UK Companies House (free, requires API key)
+- **Why kept:** Full company profile: officers, PSCs, charges, filings. Search by name, lookup by number, enrich from domain.
+
+---
+
+### Tier 5 — Network & Macro Intelligence (new)
+
+#### 31. ASN & BGP Intelligence
+- **Endpoint:** `GET /api/asn/*`
+- **Price:** $0.005 per query
+- **Data source:** BGPView (free, no key)
+- **Why kept:** Zero upstream cost. Security agents, fraud detection, network analysis. IP→ASN, ASN details, peer relationships.
+
+#### 32. World Bank Economic Indicators
+- **Endpoint:** `GET /api/economy/*`
+- **Price:** $0.005 per query
+- **Data source:** World Bank Open Data API (free, no key, CC BY 4.0)
+- **Why kept:** Zero upstream cost. Research agents, financial analysis, due diligence. GDP, inflation, unemployment, 100+ indicators, 200+ countries.
 
 ---
 

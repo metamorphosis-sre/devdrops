@@ -50,6 +50,10 @@ export const pricingMap: PricingMap = {
   "POST /api/extract/*": { price: "$0.005", description: "HTML content extraction from submitted markup" },
   "GET /api/sanctions/*": { price: "$0.05", description: "Sanctions screening — OFAC, UN, UK HMT lists with fuzzy matching" },
   "GET /api/company/*": { price: "$0.02", description: "Company enrichment — UK Companies House, officers, PSCs, charges" },
+
+  // Group F: Network intelligence + macro data
+  "GET /api/asn/*": { price: "$0.005", description: "ASN & BGP intelligence — IP to ASN, org info, peer relationships" },
+  "GET /api/economy/*": { price: "$0.005", description: "World Bank economic indicators — GDP, inflation, unemployment, 100+ metrics" },
 };
 
 // Build the x402 routes config from the pricing map.
