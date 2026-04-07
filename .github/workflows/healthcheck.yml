@@ -1,0 +1,162 @@
+name: Health Check
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"   # every 4 hours
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    name: Diagnose & auto-fix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check all endpoints
+        id: check
+        run: |
+          BASE="https://api.devdrops.run"
+          FAILURES=""
+
+          check() {
+            local label=$1
+            local method=$2
+            local path=$3
+            local expected=$4
+            local body=$5
+
+            if [ -n "$body" ]; then
+              code=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" "$BASE$path" \
+                -H "Content-Type: application/json" -d "$body")
+            else
+              code=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" "$BASE$path")
+            fi
+
+            if [ "$code" != "$expected" ]; then
+              echo "FAIL  $method $path → $code (expected $expected)"
+              FAILURES="$FAILURES\n- $label: $method $path returned $code (expected $expected)"
+            else
+              echo "ok    $method $path → $code"
+            fi
+          }
+
+          # Free endpoints
+          check "Health"         GET /health                       200
+          check "Catalog"        GET /catalog                      200
+          check "OpenAPI"        GET /openapi.json                 200
+          check "x402 manifest"  GET /.well-known/x402             200
+          check "MCP manifest"   GET /.well-known/mcp.json         200
+          check "MCP discovery"  GET /api/property/mcp             200
+          check "Admin refresh"  GET /admin/sanctions/refresh      200
+
+          # Payment-gated (all should 402)
+          check "FX"             GET /api/fx/latest                402
+          check "Weather"        GET "/api/weather/current?city=London" 402
+          check "Crypto"         GET /api/crypto/prices            402
+          check "IP"             GET /api/ip/lookup/8.8.8.8        402
+          check "History"        GET /api/history/today            402
+          check "Predictions"    GET /api/predictions/markets      402
+          check "Odds"           GET /api/odds/sports              402
+          check "Filings"        GET /api/filings/search?q=apple   402
+          check "Papers"         GET /api/papers/search?q=AI       402
+          check "Domain"         GET "/api/domain/lookup?domain=example.com" 402
+          check "Food"           GET /api/food/search?q=pasta      402
+          check "Email verify"   GET /api/email-verify/check/test@test.com 402
+          check "Tenders"        GET /api/tenders/uk/recent        402
+          check "QR"             GET "/api/qr/generate?text=hello" 402
+          check "Time"           GET "/api/time/now?tz=UTC"        402
+          check "VAT"            GET "/api/vat/verify?number=GB123456789" 402
+          check "Stocks"         GET "/api/stocks/quote?symbol=AAPL" 402
+          check "Sanctions"      GET "/api/sanctions/search?name=test" 402
+          check "Company"        GET "/api/company/search?q=google" 402
+          check "Regulatory"     GET /api/regulatory/uk/company/00000006 402
+          check "Property"       GET "/api/property/uk/prices?postcode=SW1A1AA" 402
+          check "Location"       GET "/api/location/uk/report?postcode=SW1A1AA" 402
+          check "Sentiment"      GET "/api/sentiment/analyze?query=bitcoin" 402
+          check "Calendar"       GET /api/calendar/earnings        402
+          check "Signals"        POST /api/signals/correlate       402 '{"query":"bitcoin"}'
+          check "Translate"      POST /api/translate/text          402 '{"text":"hello","target":"es"}'
+          check "Extract"        POST /api/extract/url             402 '{"url":"https://example.com"}'
+          check "Documents"      POST /api/documents/summarize     402 '{"url":"https://example.com"}'
+          check "Research"       POST /api/research/brief          402 '{"topic":"AI"}'
+
+          # 404 catch-all
+          check "404 catch-all"  GET /api/nonexistent              404
+
+          if [ -n "$FAILURES" ]; then
+            echo "failures<<EOF" >> $GITHUB_OUTPUT
+            printf "$FAILURES" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "has_failures=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_failures=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Auto-redeploy on failure
+        if: steps.check.outputs.has_failures == 'true'
+        run: npx wrangler deploy --env=""
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Open GitHub issue on persistent failure
+        if: steps.check.outputs.has_failures == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const failures = `${{ steps.check.outputs.failures }}`;
+            const now = new Date().toISOString();
+
+            // Check if there's already an open issue for health failures
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'health-failure'
+            });
+
+            if (issues.data.length > 0) {
+              // Add a comment to the existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `## Health check failed at ${now}\n\nFailing endpoints:\n${failures}\n\nAuto-redeploy was triggered.`
+              });
+            } else {
+              // Open a new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Health check failures detected`,
+                body: `## Health check failed at ${now}\n\nFailing endpoints:\n${failures}\n\nAuto-redeploy was triggered. If failures persist, manual investigation is needed.`,
+                labels: ['health-failure']
+              });
+            }
+
+      - name: Close health issue if all passing
+        if: steps.check.outputs.has_failures == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'health-failure'
+            });
+
+            for (const issue of issues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ All endpoints healthy as of ${new Date().toISOString()}. Closing.`
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }

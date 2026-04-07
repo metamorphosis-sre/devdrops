@@ -81,6 +81,12 @@ app.get("/admin/sanctions/refresh", async (c) => {
 // x402 payment middleware on all /api/* routes
 // Skipped in development (facilitator requires on-chain scheme registration)
 app.use("/api/*", async (c, next) => {
+  // MCP capability discovery (GET exact path) must be free — agents need to discover
+  // tools before they can fund a wallet. POST (JSON-RPC tool calls) stays gated.
+  if (c.req.method === "GET" && c.req.path === "/api/property/mcp") {
+    return next();
+  }
+
   if (c.env.ENVIRONMENT === "development") {
     return next();
   }
