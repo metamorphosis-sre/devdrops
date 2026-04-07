@@ -122,4 +122,10 @@ function getDateMonthsAgo(months: number) {
   return d.toISOString().split("T")[0];
 }
 
+filings.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/filings/search?q=apple", "/api/filings/company/AAPL", "/api/filings/recent"],
+}, 400));
+
 export default filings;

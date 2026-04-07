@@ -160,4 +160,10 @@ async function searchCompaniesHouse(query: string, apiKey: string) {
   }
 }
 
+regulatory.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/regulatory/search?q=financial+conduct", "/api/regulatory/sec/recent", "/api/regulatory/uk/company/00445790", "/api/regulatory/uk/filings/00445790"],
+}, 400));
+
 export default regulatory;

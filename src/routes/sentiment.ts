@@ -116,4 +116,10 @@ async function callClaude(prompt: string, apiKey: string) {
   }
 }
 
+sentiment.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/sentiment/analyze?topic=AAPL", "POST /api/sentiment/analyze (body: {text, topic?})"],
+}, 400));
+
 export default sentiment;

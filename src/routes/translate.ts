@@ -112,4 +112,10 @@ function hashString(str: string): string {
   return Math.abs(hash).toString(36);
 }
 
+translate.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["POST /api/translate/text (body: {q, target})", "/api/translate/languages"],
+}, 400));
+
 export default translate;

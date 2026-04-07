@@ -113,4 +113,10 @@ property.get("/uk/index", async (c) => {
   }
 });
 
+property.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/property/uk/prices?postcode=SW1A+1AA", "/api/property/uk/company/00445790", "/api/property/uk/index?region=london"],
+}, 400));
+
 export default property;

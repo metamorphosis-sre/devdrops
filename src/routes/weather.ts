@@ -84,4 +84,10 @@ weather.get("/forecast", async (c) => {
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
 
+weather.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/weather/current?city=London", "/api/weather/forecast?city=London"],
+}, 400));
+
 export default weather;

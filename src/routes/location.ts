@@ -135,4 +135,10 @@ async function fetchBroadband(postcode?: string | null) {
   }
 }
 
+location.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/location/uk/report?postcode=SW1A+1AA", "/api/location/uk/flood?lat=51.5&lng=-0.1", "/api/location/uk/crime?lat=51.5&lng=-0.1"],
+}, 400));
+
 export default location;

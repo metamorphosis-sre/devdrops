@@ -128,4 +128,10 @@ async function fetchSSL(domainName: string) {
   }
 }
 
+domain.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/domain/lookup/example.com", "/api/domain/dns/example.com", "/api/domain/whois/example.com"],
+}, 400));
+
 export default domain;

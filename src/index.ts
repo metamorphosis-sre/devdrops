@@ -42,6 +42,11 @@ import documents from "./routes/documents";
 import research from "./routes/research";
 import signals from "./routes/signals";
 
+// Group D: New utility products
+import qr from "./routes/qr";
+import crypto from "./routes/crypto";
+import time from "./routes/time";
+
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -116,6 +121,10 @@ app.route("/api/documents", documents);
 app.route("/api/research", research);
 app.route("/api/signals", signals);
 
+// Group D: New utility products
+app.route("/api/qr", qr);
+app.route("/api/crypto", crypto);
+app.route("/api/time", time);
 
 // Catch-all for unmatched API routes
 app.all("/api/*", (c) => {
@@ -251,7 +260,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <section class="hero">
 <div class="container">
 <h1>Data APIs that <em>agents pay for</em></h1>
-<p class="hero-sub">22 pay-per-query intelligence feeds powered by x402 micropayments. No API keys. No subscriptions. No human in the loop. Your agent sends a request, pays USDC, gets data.</p>
+<p class="hero-sub">25 pay-per-query intelligence feeds powered by x402 micropayments. No API keys. No subscriptions. No human in the loop. Your agent sends a request, pays USDC, gets data.</p>
 <div class="hero-code">
 <span class="comment">// One request. Instant data. Fractions of a cent.</span><br>
 <span class="kw">const</span> response = <span class="kw">await</span> fetchWithPayment(<br>
@@ -265,7 +274,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 
 <div class="container">
 <div class="stats">
-<div class="stat"><span class="stat-val">22</span><span class="stat-label">Data products</span></div>
+<div class="stat"><span class="stat-val">25</span><span class="stat-label">Data products</span></div>
 <div class="stat"><span class="stat-val">$0.001</span><span class="stat-label">Starting price</span></div>
 <div class="stat"><span class="stat-val">&lt;2s</span><span class="stat-label">Settlement</span></div>
 <div class="stat"><span class="stat-val">0</span><span class="stat-label">API keys needed</span></div>
@@ -369,6 +378,21 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <span class="product-tag tag-free">$0.001/query</span>
 </div>
 <div class="product">
+<div class="product-head"><span class="product-name">Crypto prices</span><span class="product-price">$0.001</span></div>
+<p class="product-desc">Live token prices, market cap, 24h change, exchange markets. BTC, ETH, SOL and 2000+ tokens via CoinCap.</p>
+<span class="product-tag tag-new">First x402-native</span>
+</div>
+<div class="product">
+<div class="product-head"><span class="product-name">QR code generator</span><span class="product-price">$0.001</span></div>
+<p class="product-desc">Generate QR codes from any text or URL. Returns SVG, PNG, or base64 JSON. No upload, serverless.</p>
+<span class="product-tag tag-new">First x402-native</span>
+</div>
+<div class="product">
+<div class="product-head"><span class="product-name">Timezone & holidays</span><span class="product-price">$0.001</span></div>
+<p class="product-desc">Current time in any IANA timezone. Public holidays for 100+ countries. Business day checks. Time conversion.</p>
+<span class="product-tag tag-new">First x402-native</span>
+</div>
+<div class="product">
 <div class="product-head"><span class="product-name">Food & nutrition</span><span class="product-price">$0.005</span></div>
 <p class="product-desc">3M+ products via Open Food Facts. Calories, allergens, ingredients. Lookup by barcode or name.</p>
 <span class="product-tag tag-new">First x402-native</span>
@@ -407,9 +431,50 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 </div>
 </section>
 
-<section class="how">
+<section class="how" id="quickstart">
 <div class="container">
-<div class="section-label">How it works</div>
+<div class="section-label">Quick start</div>
+<div class="section-title">Zero to first paid request.</div>
+<div class="steps" style="margin-bottom:32px">
+<div class="step">
+<div class="step-num">JS</div>
+<h3>Node.js / Bun</h3>
+<div class="hero-code" style="margin-top:8px;font-size:12px">
+<span class="kw">npm</span> install @x402/fetch viem<br><br>
+<span class="kw">import</span> { fetchWithPayment } <span class="kw">from</span> <span class="str">'@x402/fetch'</span>;<br>
+<span class="kw">import</span> { createWalletClient, http } <span class="kw">from</span> <span class="str">'viem'</span>;<br>
+<span class="kw">import</span> { privateKeyToAccount } <span class="kw">from</span> <span class="str">'viem/accounts'</span>;<br>
+<span class="kw">import</span> { base } <span class="kw">from</span> <span class="str">'viem/chains'</span>;<br><br>
+<span class="kw">const</span> account = privateKeyToAccount(<span class="str">'0xYOUR_PRIVATE_KEY'</span>);<br>
+<span class="kw">const</span> wallet = createWalletClient({ account, chain: base, transport: http() });<br><br>
+<span class="kw">const</span> res = <span class="kw">await</span> fetchWithPayment(<br>
+&nbsp;&nbsp;<span class="str">'https://api.devdrops.run/api/fx/latest'</span>,<br>
+&nbsp;&nbsp;{ wallet }<br>
+);<br>
+<span class="kw">const</span> data = <span class="kw">await</span> res.json();
+</div>
+</div>
+<div class="step">
+<div class="step-num">curl</div>
+<h3>Raw 402 flow</h3>
+<div class="hero-code" style="margin-top:8px;font-size:12px">
+<span class="comment"># See the payment challenge</span><br>
+curl https://api.devdrops.run/api/fx/latest<br><br>
+<span class="comment"># Returns HTTP 402 with payment instructions:</span><br>
+<span class="comment"># { accepts: [{ scheme: "exact",</span><br>
+<span class="comment">#   price: "$0.001", network: "eip155:8453",</span><br>
+<span class="comment">#   payTo: "0x..." }] }</span>
+</div>
+</div>
+<div class="step">
+<div class="step-num">test</div>
+<h3>Try for free (testnet)</h3>
+<p style="font-size:12px;color:var(--text2);margin-top:8px">Get free test USDC from <a href="https://faucet.circle.com/">Circle's faucet</a>. Point your x402 client at <code style="font-size:11px">ENVIRONMENT=development</code> to skip payment and test data responses locally with <code style="font-size:11px">wrangler dev</code>.</p>
+<p style="font-size:12px;color:var(--text2);margin-top:8px">New to crypto wallets? Install <a href="https://www.coinbase.com/wallet">Coinbase Wallet</a>, buy a small amount of USDC on Base, then use the private key with @x402/fetch.</p>
+</div>
+</div>
+
+<div class="section-label" style="margin-top:40px">How it works</div>
 <div class="section-title">Three steps. No signup.</div>
 <div class="steps">
 <div class="step">
@@ -466,6 +531,8 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <a href="/health" style="color:var(--text3)">Status</a>
 &nbsp;·&nbsp;
 <a href="/openapi.json" style="color:var(--text3)">OpenAPI</a>
+&nbsp;·&nbsp;
+<a href="https://github.com/metamorphosis-sre/devdrops/issues" style="color:var(--text3)">Issues</a>
 &nbsp;·&nbsp;
 x402 · Base · Cloudflare
 </span>

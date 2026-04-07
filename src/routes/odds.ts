@@ -91,4 +91,10 @@ odds.get("/scores/:sport", async (c) => {
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
 
+odds.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/odds/sports", "/api/odds/events/soccer_epl", "/api/odds/scores/soccer_epl"],
+}, 400));
+
 export default odds;

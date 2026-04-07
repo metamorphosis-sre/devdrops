@@ -19,6 +19,8 @@ export interface Env {
   ODDS_API_KEY: string;             // The Odds API
   COMPANIES_HOUSE_API_KEY: string;  // UK Companies House
   ANTHROPIC_API_KEY: string;        // Claude API for AI products
+  SAM_GOV_API_KEY: string;          // SAM.gov (US government tenders)
+  FDC_API_KEY: string;              // USDA FoodData Central
 }
 
 export interface ProductConfig {

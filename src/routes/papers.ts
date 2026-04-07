@@ -90,4 +90,10 @@ function reconstructAbstract(inverted: Record<string, number[]>): string {
   return words.map((w) => w[1]).join(" ");
 }
 
+papers.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/papers/search?q=machine+learning", "/api/papers/work/W2741809807"],
+}, 400));
+
 export default papers;

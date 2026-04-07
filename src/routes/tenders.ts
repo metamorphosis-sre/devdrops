@@ -25,7 +25,7 @@ tenders.get("/search", async (c) => {
       data = await searchUKContracts(q);
       break;
     case "us":
-      data = await searchUSContracts(q);
+      data = await searchUSContracts(q, c.env.SAM_GOV_API_KEY);
       break;
     default:
       data = await searchUKContracts(q); // Default to UK
@@ -52,7 +52,7 @@ tenders.get("/us/recent", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const data = await searchUSContracts("");
+  const data = await searchUSContracts("", c.env.SAM_GOV_API_KEY);
   await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
@@ -86,9 +86,10 @@ async function searchUKContracts(query: string) {
   }
 }
 
-async function searchUSContracts(query: string) {
+async function searchUSContracts(query: string, apiKey?: string) {
   try {
-    const url = `https://api.sam.gov/opportunities/v2/search?api_key=DEMO_KEY&limit=20&postedFrom=${getDateDaysAgo(30)}&postedTo=${getToday()}${query ? `&title=${encodeURIComponent(query)}` : ""}`;
+    const key = apiKey || "DEMO_KEY";
+    const url = `https://api.sam.gov/opportunities/v2/search?api_key=${key}&limit=20&postedFrom=${getDateDaysAgo(30)}&postedTo=${getToday()}${query ? `&title=${encodeURIComponent(query)}` : ""}`;
     const res = await fetchUpstream(url);
     const raw: any = await res.json();
 
@@ -121,5 +122,11 @@ function getDateDaysAgo(days: number) {
   d.setDate(d.getDate() - days);
   return d.toISOString().split("T")[0].replace(/-/g, "/");
 }
+
+tenders.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/tenders/search?q=IT+services&country=uk", "/api/tenders/uk/recent", "/api/tenders/us/recent"],
+}, 400));
 
 export default tenders;

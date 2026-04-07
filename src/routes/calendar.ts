@@ -111,4 +111,10 @@ async function fetchECBSchedule() {
   };
 }
 
+calendar.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/calendar/upcoming", "/api/calendar/fomc", "/api/calendar/earnings?date=2026-04-07"],
+}, 400));
+
 export default calendar;

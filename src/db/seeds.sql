@@ -55,20 +55,11 @@ INSERT OR IGNORE INTO data_sources (product, source_name, source_url, is_primary
 -- Signals (Anthropic)
 ('signals', 'anthropic-api', 'https://api.anthropic.com', 1, 1),
 
--- Flights (Amadeus)
-('flights', 'amadeus', 'https://api.amadeus.com', 1, 1),
-
--- Jobs (Adzuna)
-('jobs', 'adzuna', 'https://api.adzuna.com', 1, 1),
-
--- Translate (LibreTranslate)
-('translate', 'libretranslate', 'https://libretranslate.com/languages', 1, 1),
+-- Translate (MyMemory)
+('translate', 'mymemory', 'https://api.mymemory.translated.net/get?q=hello&langpair=en|fr', 1, 1),
 
 -- Email verify (DNS-based — self-contained, no upstream dependency)
 ('email-verify', 'dns-mx', 'https://cloudflare-dns.com/dns-query', 1, 1),
-
--- Shipping (EasyPost)
-('shipping', 'easypost', 'https://api.easypost.com', 1, 1),
 
 -- Papers (OpenAlex + Semantic Scholar)
 ('papers', 'openalex', 'https://api.openalex.org/works?filter=title.search:test&per_page=1', 1, 1),

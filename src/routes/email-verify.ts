@@ -91,4 +91,10 @@ emailVerify.get("/check/:email", async (c) => {
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
 
+emailVerify.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/email-verify/check/user@example.com"],
+}, 400));
+
 export default emailVerify;

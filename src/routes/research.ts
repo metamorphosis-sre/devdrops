@@ -146,4 +146,10 @@ async function synthesizeBrief(topic: string, context: any, apiKey: string, focu
   }
 }
 
+research.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/research/brief?topic=quantum+computing", "POST /api/research/brief (body: {topic, focus?})"],
+}, 400));
+
 export default research;

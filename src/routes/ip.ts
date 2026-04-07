@@ -74,4 +74,10 @@ ip.get("/lookup/:ip", async (c) => {
   }
 });
 
+ip.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/ip/me", "/api/ip/lookup/8.8.8.8"],
+}, 400));
+
 export default ip;

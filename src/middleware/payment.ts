@@ -36,6 +36,11 @@ export const pricingMap: PricingMap = {
   // Expansion products
   "POST /api/translate/*": { price: "$0.005", description: "Text translation — 70+ languages" },
   "GET /api/email-verify/*": { price: "$0.005", description: "Email address verification" },
+
+  // New utility products
+  "GET /api/qr/*": { price: "$0.001", description: "QR code generator — SVG, PNG, or base64 JSON" },
+  "GET /api/crypto/*": { price: "$0.001", description: "Crypto token prices and market data via CoinCap" },
+  "GET /api/time/*": { price: "$0.001", description: "Timezone conversion, public holidays, business day checks" },
 };
 
 // Build the x402 routes config from the pricing map.
@@ -44,6 +49,7 @@ export function buildX402Routes(payTo: string, network: string) {
   const routes: Record<string, {
     accepts: { scheme: string; price: string; network: string; payTo: string };
     description: string;
+    mimeType: string;
     extensions: Record<string, unknown>;
   }> = {};
 
@@ -63,6 +69,7 @@ export function buildX402Routes(payTo: string, network: string) {
         payTo,
       },
       description: config.description,
+      mimeType: "application/json",
       extensions,
     };
   }

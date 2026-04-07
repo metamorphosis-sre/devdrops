@@ -83,4 +83,10 @@ fx.get("/historical", async (c) => {
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
 
+fx.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/fx/latest", "/api/fx/convert?from=USD&to=GBP&amount=100", "/api/fx/currencies", "/api/fx/historical?date=2026-01-15"],
+}, 400));
+
 export default fx;

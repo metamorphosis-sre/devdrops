@@ -81,4 +81,10 @@ async function correlateWithClaude(market: string, context: any, apiKey: string)
   }
 }
 
+signals.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/signals/correlate?market=us-election"],
+}, 400));
+
 export default signals;

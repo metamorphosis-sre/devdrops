@@ -56,4 +56,10 @@ async function fetchDay(c: any, mm: string, dd: string) {
   return c.json({ product: PRODUCT, date: `${mm}-${dd}`, cached: false, data, timestamp: new Date().toISOString() });
 }
 
+history.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/history/today", "/api/history/04/15"],
+}, 400));
+
 export default history;

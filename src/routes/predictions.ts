@@ -136,4 +136,10 @@ async function fetchManifoldSearch(query: string) {
   }
 }
 
+predictions.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/predictions/markets", "/api/predictions/search?q=election", "/api/predictions/polymarket", "/api/predictions/manifold"],
+}, 400));
+
 export default predictions;

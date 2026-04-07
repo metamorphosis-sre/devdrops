@@ -42,6 +42,8 @@ documents.post("/extract", async (c) => {
 
   const body = await c.req.json<{ text: string }>();
   if (!body.text) return c.json({ error: "Missing 'text' in request body" }, 400);
+  if (body.text.length < 50) return c.json({ error: "Text too short (minimum 50 characters)" }, 400);
+  if (body.text.length > 100000) return c.json({ error: "Text too long (maximum 100,000 characters)" }, 400);
 
   const extracted = await extractWithClaude(body.text, c.env.ANTHROPIC_API_KEY);
 
@@ -100,5 +102,11 @@ async function extractWithClaude(text: string, apiKey: string) {
     return { error: "Extraction failed", detail: String(e) };
   }
 }
+
+documents.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["POST /api/documents/summarize (body: {text})", "POST /api/documents/extract (body: {text})"],
+}, 400));
 
 export default documents;

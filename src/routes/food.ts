@@ -100,7 +100,8 @@ food.get("/usda/search", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(q)}&pageSize=10&api_key=DEMO_KEY`;
+  const fdcKey = c.env.FDC_API_KEY || "DEMO_KEY";
+  const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(q)}&pageSize=10&api_key=${fdcKey}`;
   const res = await fetchUpstream(url);
   const raw: any = await res.json();
 
@@ -122,5 +123,11 @@ food.get("/usda/search", async (c) => {
   await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
+
+food.get("/", (c) => c.json({
+  error: "Specify a sub-path",
+  docs: "https://api.devdrops.run/openapi.json",
+  examples: ["/api/food/search?q=banana", "/api/food/barcode/737628064502", "/api/food/usda/search?q=chicken"],
+}, 400));
 
 export default food;
