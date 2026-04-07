@@ -8,6 +8,7 @@ export const pricingMap: PricingMap = {
   // Tier 1: Domain Expertise
   "GET /api/property/*": { price: "$0.01", description: "Global property intelligence — planning, prices, zoning" },
   "GET /api/property/mcp/*": { price: "$0.01", description: "Property intelligence via MCP tools" },
+  "POST /api/property/mcp": { price: "$0.01", description: "Property intelligence via MCP tools (JSON-RPC)" },
 
   // Tier 2: Data Aggregation
   "GET /api/predictions/*": { price: "$0.005", description: "Cross-platform prediction market odds" },

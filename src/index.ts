@@ -34,6 +34,7 @@ import odds from "./routes/odds";
 import calendar from "./routes/calendar";
 import regulatory from "./routes/regulatory";
 import property from "./routes/property";
+import propertyMcp from "./routes/property-mcp";
 import location from "./routes/location";
 
 // Group C: AI-enhanced (Anthropic API key)
@@ -126,6 +127,7 @@ app.route("/api/weather", weather);
 app.route("/api/odds", odds);
 app.route("/api/calendar", calendar);
 app.route("/api/regulatory", regulatory);
+app.route("/api/property/mcp", propertyMcp); // mount before /api/property so /mcp isn't swallowed
 app.route("/api/property", property);
 app.route("/api/location", location);
 

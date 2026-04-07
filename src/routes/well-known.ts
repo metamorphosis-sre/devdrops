@@ -63,4 +63,43 @@ wellKnown.get("/x402", (c) => {
   });
 });
 
+// GET /.well-known/mcp.json — MCP server discovery manifest
+wellKnown.get("/mcp.json", (c) => {
+  return c.json({
+    schema_version: "v1",
+    name_for_human: "DevDrops Property",
+    name_for_model: "devdrops_property",
+    description_for_human: "UK property price lookups, company charges, and House Price Index via MCP.",
+    description_for_model: "Query UK property transaction prices by postcode, look up property charges registered against a company, and retrieve the UK House Price Index by region. All data is sourced from HM Land Registry and Companies House. Prices are paid in USDC via x402.",
+    auth: { type: "none" },
+    payment: {
+      type: "x402",
+      network: "base",
+      currency: "USDC",
+      price_per_call: "0.01",
+      facilitator: "https://api.cdp.coinbase.com/platform/v2/x402",
+    },
+    api: {
+      type: "mcp",
+      url: "https://api.devdrops.run/api/property/mcp",
+      transport: "streamable-http",
+      protocol_version: "2024-11-05",
+    },
+    tools: [
+      {
+        name: "get_uk_property_prices",
+        description: "Recent UK property sale prices by postcode from HM Land Registry.",
+      },
+      {
+        name: "get_uk_company_property_charges",
+        description: "Property charges (mortgages) registered against a UK company number.",
+      },
+      {
+        name: "get_uk_house_price_index",
+        description: "UK House Price Index — average prices and annual/monthly changes by region.",
+      },
+    ],
+  }, 200, { "Cache-Control": "public, max-age=86400" });
+});
+
 export default wellKnown;
