@@ -17,12 +17,16 @@ odds.get("/sports", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const url = `${BASE_URL}/sports?apiKey=${c.env.ODDS_API_KEY}`;
-  const res = await fetchUpstream(url);
-  const data = await res.json();
+  try {
+    const url = `${BASE_URL}/sports?apiKey=${c.env.ODDS_API_KEY}`;
+    const res = await fetchUpstream(url);
+    const data = await res.json();
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, 3600);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setCache(c.env.DB, PRODUCT, cacheKey, data, 3600);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "Odds service unavailable" }, 503);
+  }
 });
 
 // GET /api/odds/events/:sport — upcoming events with odds for a sport
@@ -37,40 +41,44 @@ odds.get("/events/:sport", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const url = `${BASE_URL}/sports/${sport}/odds?apiKey=${c.env.ODDS_API_KEY}&regions=${regions}&markets=${markets}&oddsFormat=decimal`;
-  const res = await fetchUpstream(url);
-  const raw: any[] = await res.json();
+  try {
+    const url = `${BASE_URL}/sports/${sport}/odds?apiKey=${c.env.ODDS_API_KEY}&regions=${regions}&markets=${markets}&oddsFormat=decimal`;
+    const res = await fetchUpstream(url);
+    const raw: any[] = await res.json();
 
-  const data = raw.map((event) => ({
-    id: event.id,
-    sport: event.sport_key,
-    home: event.home_team,
-    away: event.away_team,
-    commence: event.commence_time,
-    bookmakers: event.bookmakers?.map((bm: any) => ({
-      name: bm.key,
-      title: bm.title,
-      markets: bm.markets?.map((m: any) => ({
-        key: m.key,
-        outcomes: m.outcomes?.map((o: any) => ({
-          name: o.name,
-          price: o.price,
-          point: o.point,
+    const data = raw.map((event) => ({
+      id: event.id,
+      sport: event.sport_key,
+      home: event.home_team,
+      away: event.away_team,
+      commence: event.commence_time,
+      bookmakers: event.bookmakers?.map((bm: any) => ({
+        name: bm.key,
+        title: bm.title,
+        markets: bm.markets?.map((m: any) => ({
+          key: m.key,
+          outcomes: m.outcomes?.map((o: any) => ({
+            name: o.name,
+            price: o.price,
+            point: o.point,
+          })),
         })),
       })),
-    })),
-  }));
+    }));
 
-  const remaining = res.headers.get("x-requests-remaining");
+    const remaining = res.headers.get("x-requests-remaining");
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
-  return c.json({
-    product: PRODUCT,
-    cached: false,
-    data,
-    api_requests_remaining: remaining,
-    timestamp: new Date().toISOString(),
-  });
+    await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({
+      product: PRODUCT,
+      cached: false,
+      data,
+      api_requests_remaining: remaining,
+      timestamp: new Date().toISOString(),
+    });
+  } catch {
+    return c.json({ error: "Odds service unavailable" }, 503);
+  }
 });
 
 // GET /api/odds/scores/:sport — live and recent scores
@@ -83,12 +91,16 @@ odds.get("/scores/:sport", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const url = `${BASE_URL}/sports/${sport}/scores?apiKey=${c.env.ODDS_API_KEY}&daysFrom=1`;
-  const res = await fetchUpstream(url);
-  const data = await res.json();
+  try {
+    const url = `${BASE_URL}/sports/${sport}/scores?apiKey=${c.env.ODDS_API_KEY}&daysFrom=1`;
+    const res = await fetchUpstream(url);
+    const data = await res.json();
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "Scores service unavailable" }, 503);
+  }
 });
 
 odds.get("/", (c) => c.json({

@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import type { Env } from "../types";
+import { getTiered, setTiered } from "../lib/cache";
 
 const PRODUCT = "ip";
+const CACHE_TTL = 3600; // 1 hour (IP geo data is stable)
 
 const ip = new Hono<{ Bindings: Env }>();
 
@@ -35,6 +37,10 @@ ip.get("/me", async (c) => {
 // GET /api/ip/lookup/:ip — lookup a specific IP address (IPinfo.io — free tier, commercial use OK)
 ip.get("/lookup/:ip", async (c) => {
   const ipAddr = c.req.param("ip");
+  const cacheKey = `lookup:${ipAddr}`;
+
+  const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
+  if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
   try {
     // IPinfo.io: free tier 50K lookups/month, commercial use allowed
@@ -68,7 +74,8 @@ ip.get("/lookup/:ip", async (c) => {
       organization: raw.org,
     };
 
-    return c.json({ product: PRODUCT, data, timestamp: new Date().toISOString() });
+    await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
   } catch {
     return c.json({ error: "IP lookup service unavailable" }, 503);
   }

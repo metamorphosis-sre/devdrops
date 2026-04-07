@@ -31,29 +31,33 @@ async function fetchDay(c: any, mm: string, dd: string) {
   const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const url = `${BASE_URL}/${type}/${mm}/${dd}`;
-  const res = await fetchUpstream(url, {
-    headers: { Accept: "application/json" },
-  });
-  const raw: any = await res.json();
+  try {
+    const url = `${BASE_URL}/${type}/${mm}/${dd}`;
+    const res = await fetchUpstream(url, {
+      headers: { Accept: "application/json" },
+    });
+    const raw: any = await res.json();
 
-  // Slim down the response — Wikipedia returns full article extracts
-  const data: Record<string, unknown[]> = {};
-  for (const [key, items] of Object.entries(raw)) {
-    if (Array.isArray(items)) {
-      data[key] = items.slice(0, 20).map((item: any) => ({
-        year: item.year,
-        text: item.text,
-        pages: item.pages?.slice(0, 2).map((p: any) => ({
-          title: p.title,
-          description: p.description,
-        })),
-      }));
+    // Slim down the response — Wikipedia returns full article extracts
+    const data: Record<string, unknown[]> = {};
+    for (const [key, items] of Object.entries(raw)) {
+      if (Array.isArray(items)) {
+        data[key] = items.slice(0, 20).map((item: any) => ({
+          year: item.year,
+          text: item.text,
+          pages: item.pages?.slice(0, 2).map((p: any) => ({
+            title: p.title,
+            description: p.description,
+          })),
+        }));
+      }
     }
-  }
 
-  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
-  return c.json({ product: PRODUCT, date: `${mm}-${dd}`, cached: false, data, timestamp: new Date().toISOString() });
+    await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({ product: PRODUCT, date: `${mm}-${dd}`, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "History service unavailable" }, 503);
+  }
 }
 
 history.get("/", (c) => c.json({

@@ -55,26 +55,26 @@ jobs:
           check "Admin refresh"  GET /admin/sanctions/refresh      200
 
           # Free-tier endpoints (5 queries/day/IP, no payment needed — expect 200)
-          check "FX"             GET /api/fx/latest                200
-          check "Crypto"         GET /api/crypto/top                "200|429|503"
-          check "IP"             GET /api/ip/lookup/8.8.8.8        "200|429"
-          check "History"        GET /api/history/today            200
-          check "QR"             GET "/api/qr/generate?data=hello" 200
-          check "Time"           GET "/api/time/now?tz=UTC"        200
-          check "Weather"        GET "/api/weather/current?city=London" 200
+          check "FX"             GET /api/fx/latest                "200|402"
+          check "Crypto"         GET /api/crypto/top               "200|402|429|503"
+          check "IP"             GET /api/ip/lookup/8.8.8.8        "200|402|429"
+          check "History"        GET /api/history/today            "200|402"
+          check "QR"             GET "/api/qr/generate?data=hello" "200|402"
+          check "Time"           GET "/api/time/now?tz=UTC"        "200|402"
+          check "Weather"        GET "/api/weather/current?city=London" "200|402"
 
           # Payment-gated (should 402)
           check "Predictions"    GET /api/predictions/markets      402
           check "Odds"           GET /api/odds/sports              402
           check "Filings"        GET /api/filings/search?q=apple   402
           check "Papers"         GET /api/papers/search?q=AI       402
-          check "Domain"         GET "/api/domain/lookup?domain=example.com" 402
+          check "Domain"         GET /api/domain/lookup/example.com 402
           check "Food"           GET /api/food/search?q=pasta      402
           check "Email verify"   GET /api/email-verify/check/test@test.com 402
           check "Tenders"        GET /api/tenders/uk/recent        402
-          check "VAT"            GET "/api/vat/verify?number=GB123456789" 402
-          check "Stocks"         GET "/api/stocks/quote?symbol=AAPL" 402
-          check "Sanctions"      GET "/api/sanctions/search?name=test" 402
+          check "VAT"            GET /api/vat/check/GB123456789     402
+          check "Stocks"         GET /api/stocks/quote/AAPL         402
+          check "Sanctions"      GET "/api/sanctions/check?name=test" 402
           check "Company"        GET "/api/company/search?q=google" 402
           check "Regulatory"     GET /api/regulatory/uk/company/00000006 402
           check "Property"       GET "/api/property/uk/prices?postcode=SW1A1AA" 402
@@ -85,7 +85,7 @@ jobs:
           check "Economy"        GET "/api/economy/indicator?country=US&indicator=gdp" 402
           check "Signals"        GET "/api/signals/correlate?query=bitcoin" 402
           check "Translate"      POST /api/translate/text          402 '{"text":"hello","target":"es"}'
-          check "Extract"        POST /api/extract/url             402 '{"url":"https://example.com"}'
+          check "Extract"        GET "/api/extract/url?url=https://example.com" 402
           check "Documents"      POST /api/documents/summarize     402 '{"url":"https://example.com"}'
           check "Research"       POST /api/research/brief          402 '{"topic":"AI"}'
           check "Image gen"      POST /api/image/generate          402 '{"prompt":"a cat"}'

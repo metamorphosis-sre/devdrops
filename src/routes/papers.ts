@@ -21,29 +21,33 @@ papers.get("/search", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const url = `${BASE_URL}/works?search=${encodeURIComponent(q)}&page=${page}&per_page=${perPage}&select=id,doi,title,publication_year,cited_by_count,open_access,authorships,primary_location`;
-  const res = await fetchUpstream(url, { headers: { Accept: "application/json" } });
-  const raw: any = await res.json();
+  try {
+    const url = `${BASE_URL}/works?search=${encodeURIComponent(q)}&page=${page}&per_page=${perPage}&select=id,doi,title,publication_year,cited_by_count,open_access,authorships,primary_location`;
+    const res = await fetchUpstream(url, { headers: { Accept: "application/json" } });
+    const raw: any = await res.json();
 
-  const data = {
-    count: raw.meta?.count,
-    page: parseInt(page),
-    per_page: parseInt(perPage),
-    results: raw.results?.map((w: any) => ({
-      id: w.id,
-      doi: w.doi,
-      title: w.title,
-      year: w.publication_year,
-      citations: w.cited_by_count,
-      open_access: w.open_access?.is_oa ?? false,
-      oa_url: w.open_access?.oa_url,
-      authors: w.authorships?.slice(0, 5).map((a: any) => a.author?.display_name),
-      journal: w.primary_location?.source?.display_name,
-    })),
-  };
+    const data = {
+      count: raw.meta?.count,
+      page: parseInt(page),
+      per_page: parseInt(perPage),
+      results: raw.results?.map((w: any) => ({
+        id: w.id,
+        doi: w.doi,
+        title: w.title,
+        year: w.publication_year,
+        citations: w.cited_by_count,
+        open_access: w.open_access?.is_oa ?? false,
+        oa_url: w.open_access?.oa_url,
+        authors: w.authorships?.slice(0, 5).map((a: any) => a.author?.display_name),
+        journal: w.primary_location?.source?.display_name,
+      })),
+    };
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "Papers search service unavailable" }, 503);
+  }
 });
 
 // GET /api/papers/work/:id — get a specific work by OpenAlex ID
@@ -54,29 +58,33 @@ papers.get("/work/:id", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const url = `${BASE_URL}/works/${id}`;
-  const res = await fetchUpstream(url, { headers: { Accept: "application/json" } });
-  const w: any = await res.json();
+  try {
+    const url = `${BASE_URL}/works/${id}`;
+    const res = await fetchUpstream(url, { headers: { Accept: "application/json" } });
+    const w: any = await res.json();
 
-  const data = {
-    id: w.id,
-    doi: w.doi,
-    title: w.title,
-    year: w.publication_year,
-    citations: w.cited_by_count,
-    abstract: w.abstract_inverted_index ? reconstructAbstract(w.abstract_inverted_index) : null,
-    open_access: w.open_access?.is_oa ?? false,
-    oa_url: w.open_access?.oa_url,
-    authors: w.authorships?.map((a: any) => ({
-      name: a.author?.display_name,
-      institution: a.institutions?.[0]?.display_name,
-    })),
-    journal: w.primary_location?.source?.display_name,
-    type: w.type,
-  };
+    const data = {
+      id: w.id,
+      doi: w.doi,
+      title: w.title,
+      year: w.publication_year,
+      citations: w.cited_by_count,
+      abstract: w.abstract_inverted_index ? reconstructAbstract(w.abstract_inverted_index) : null,
+      open_access: w.open_access?.is_oa ?? false,
+      oa_url: w.open_access?.oa_url,
+      authors: w.authorships?.map((a: any) => ({
+        name: a.author?.display_name,
+        institution: a.institutions?.[0]?.display_name,
+      })),
+      journal: w.primary_location?.source?.display_name,
+      type: w.type,
+    };
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "Papers service unavailable" }, 503);
+  }
 });
 
 function reconstructAbstract(inverted: Record<string, number[]>): string {

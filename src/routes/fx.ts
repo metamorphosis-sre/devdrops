@@ -36,21 +36,25 @@ fx.get("/convert", async (c) => {
 
   if (!from || !to) return c.json({ error: "Missing 'from' and 'to' query params" }, 400);
 
-  const url = `${BASE_URL}/latest?base=${from}&symbols=${to}`;
-  const res = await fetchUpstream(url);
-  const data: any = await res.json();
-  const rate = data.rates?.[to];
+  try {
+    const url = `${BASE_URL}/latest?base=${from}&symbols=${to}`;
+    const res = await fetchUpstream(url);
+    const data: any = await res.json();
+    const rate = data.rates?.[to];
 
-  return c.json({
-    product: PRODUCT,
-    from,
-    to,
-    amount: parseFloat(amount),
-    rate,
-    result: rate ? parseFloat(amount) * rate : null,
-    date: data.date,
-    timestamp: new Date().toISOString(),
-  });
+    return c.json({
+      product: PRODUCT,
+      from,
+      to,
+      amount: parseFloat(amount),
+      rate,
+      result: rate ? parseFloat(amount) * rate : null,
+      date: data.date,
+      timestamp: new Date().toISOString(),
+    });
+  } catch {
+    return c.json({ error: "FX conversion service unavailable" }, 503);
+  }
 });
 
 // GET /api/fx/currencies — list available currencies
@@ -59,11 +63,15 @@ fx.get("/currencies", async (c) => {
   const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const res = await fetchUpstream(`${BASE_URL}/currencies`);
-  const data = await res.json();
+  try {
+    const res = await fetchUpstream(`${BASE_URL}/currencies`);
+    const data = await res.json();
 
-  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, 86400); // 24h cache
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, 86400); // 24h cache
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "FX currencies service unavailable" }, 503);
+  }
 });
 
 // GET /api/fx/historical?date=2026-01-15&base=USD
@@ -76,11 +84,15 @@ fx.get("/historical", async (c) => {
   const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const res = await fetchUpstream(`${BASE_URL}/${date}?base=${base}`);
-  const data = await res.json();
+  try {
+    const res = await fetchUpstream(`${BASE_URL}/${date}?base=${base}`);
+    const data = await res.json();
 
-  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, 86400);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, 86400);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "FX historical data service unavailable" }, 503);
+  }
 });
 
 fx.get("/", (c) => c.json({

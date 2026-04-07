@@ -113,13 +113,13 @@ describe("payment-gated endpoints (always 402 without payment)", () => {
     expect(res.status).toBe(402);
   });
 
-  it("GET /api/sanctions/search?name=test returns 402", async () => {
-    const res = await get("/api/sanctions/search?name=test");
+  it("GET /api/sanctions/check?name=test returns 402", async () => {
+    const res = await get("/api/sanctions/check?name=test");
     expect(res.status).toBe(402);
   });
 
-  it("GET /api/stocks/quote?symbol=AAPL returns 402", async () => {
-    const res = await get("/api/stocks/quote?symbol=AAPL");
+  it("GET /api/stocks/quote/AAPL returns 402", async () => {
+    const res = await get("/api/stocks/quote/AAPL");
     expect(res.status).toBe(402);
   });
 
