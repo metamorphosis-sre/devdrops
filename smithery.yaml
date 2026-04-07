@@ -1,0 +1,10 @@
+# Smithery registry configuration for DevDrops Property MCP
+# https://smithery.ai/docs/build/project-config/smithery.yaml
+
+startCommand:
+  type: http
+
+configSchema:
+  type: object
+  required: []
+  properties: {}
