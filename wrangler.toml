@@ -21,6 +21,10 @@ database_id = "dc92b44a-7d5e-46f1-b7cc-865328f8d42e"
 # binding = "STORAGE"
 # bucket_name = "devdrops-backups"
 
+# Cloudflare Workers AI
+[ai]
+binding = "AI"
+
 # KV Namespace (edge cache for hot data)
 [[kv_namespaces]]
 binding = "CACHE"

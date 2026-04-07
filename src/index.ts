@@ -60,6 +60,11 @@ import company from "./routes/company";
 import asn from "./routes/asn";
 import economy from "./routes/economy";
 
+// Group G: AI + utilities
+import image from "./routes/image";
+import inference from "./routes/inference";
+import utils from "./routes/utils";
+
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -163,6 +168,11 @@ app.route("/api/company", company);
 // Group F: Network intelligence + macro data
 app.route("/api/asn", asn);
 app.route("/api/economy", economy);
+
+// Group G: AI + utilities
+app.route("/api/image", image);
+app.route("/api/inference", inference);
+app.route("/api/utils", utils);
 
 // Catch-all for unmatched API routes
 app.all("/api/*", (c) => {

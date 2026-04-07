@@ -54,6 +54,12 @@ export const pricingMap: PricingMap = {
   // Group F: Network intelligence + macro data
   "GET /api/asn/*": { price: "$0.005", description: "ASN & BGP intelligence — IP to ASN, org info, peer relationships" },
   "GET /api/economy/*": { price: "$0.005", description: "World Bank economic indicators — GDP, inflation, unemployment, 100+ metrics" },
+
+  // Group G: AI + utilities
+  "POST /api/image/generate": { price: "$0.02", description: "AI image generation — Flux and Stable Diffusion XL via Cloudflare Workers AI" },
+  "POST /api/inference/complete": { price: "$0.005", description: "LLM text completion — Llama 3.1, Mistral 7B via Cloudflare Workers AI" },
+  "POST /api/inference/chat": { price: "$0.005", description: "LLM multi-turn chat — Llama 3.1, Mistral 7B via Cloudflare Workers AI" },
+  "GET /api/utils/*": { price: "$0.001", description: "Utility functions — hash, IBAN validation, base64 encode/decode, UUID generation" },
 };
 
 // Build the x402 routes config from the pricing map.

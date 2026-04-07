@@ -3,6 +3,7 @@ export interface Env {
   DB: D1Database;
   STORAGE: R2Bucket | undefined;
   CACHE: KVNamespace;
+  AI: Ai;
 
   // x402 payment config
   FACILITATOR_URL: string;
