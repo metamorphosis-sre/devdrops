@@ -4,6 +4,36 @@ import { pricingMap } from "../middleware/payment";
 
 const wellKnown = new Hono<{ Bindings: Env }>();
 
+// GET /.well-known/mcp/server-card.json — Smithery server card for MCP registry discovery
+wellKnown.get("/mcp/server-card.json", (c) => {
+  return c.json({
+    serverInfo: { name: "devdrops", version: "1.0.0" },
+    description: "43 pay-per-query data APIs as MCP tools. Weather, FX, stocks, crypto, SEC filings, sanctions, sentiment, research, IP, and more. Pay $0.01 USDC per call via x402 on Base mainnet. Free discovery.",
+    authentication: { required: false },
+    payment: { type: "x402", network: "eip155:8453", currency: "USDC", pricePerCall: "0.01" },
+    tools: [
+      { name: "get_weather", description: "Current weather or 5-day forecast" },
+      { name: "get_fx_rate", description: "Currency exchange rates and conversion" },
+      { name: "get_crypto_price", description: "Live crypto prices (2000+ tokens)" },
+      { name: "get_stock_quote", description: "Stock quotes (10,000+ tickers)" },
+      { name: "search_papers", description: "Academic paper search (OpenAlex)" },
+      { name: "search_filings", description: "SEC EDGAR filing search" },
+      { name: "get_company_filings", description: "Company SEC filings by ticker" },
+      { name: "get_ip_info", description: "IP geolocation" },
+      { name: "analyze_sentiment", description: "AI news sentiment analysis" },
+      { name: "get_odds", description: "Sports betting odds" },
+      { name: "search_food", description: "Food nutrition data" },
+      { name: "get_domain_info", description: "WHOIS and DNS info" },
+      { name: "verify_vat", description: "EU/UK VAT verification" },
+      { name: "check_sanctions", description: "Sanctions screening (OFAC/UN/HMT)" },
+      { name: "get_history_today", description: "Historical events today" },
+      { name: "generate_qr", description: "QR code generation" },
+      { name: "research_topic", description: "AI research brief" },
+      { name: "summarize_url", description: "AI web page summarization" },
+    ],
+  }, 200, { "Cache-Control": "public, max-age=86400" });
+});
+
 // GET /.well-known/x402
 // Machine-readable service manifest for AI agent discovery.
 // Follows de facto x402 ecosystem conventions (not yet formally standardised).
