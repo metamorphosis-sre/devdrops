@@ -7,7 +7,9 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:init": "wrangler d1 execute devdrops --local --file=src/db/schema.sql",
-    "db:init:remote": "wrangler d1 execute devdrops --remote --file=src/db/schema.sql"
+    "db:init:remote": "wrangler d1 execute devdrops --remote --file=src/db/schema.sql",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@x402/evm": "^2.9.0",
@@ -17,8 +19,10 @@
     "jose": "^6.2.2"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.14.1",
     "@cloudflare/workers-types": "^4.20250327.0",
     "typescript": "^5.8.0",
+    "vitest": "^4.1.2",
     "wrangler": "^4.14.0"
   }
 }
