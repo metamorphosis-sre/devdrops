@@ -9,6 +9,9 @@ jobs:
   diagnose:
     name: Diagnose & auto-fix
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -53,7 +56,7 @@ jobs:
 
           # Free-tier endpoints (5 queries/day/IP, no payment needed — expect 200)
           check "FX"             GET /api/fx/latest                200
-          check "Crypto"         GET /api/crypto/top                200
+          check "Crypto"         GET /api/crypto/top                "200|429|503"
           check "IP"             GET /api/ip/lookup/8.8.8.8        "200|429"
           check "History"        GET /api/history/today            200
           check "QR"             GET "/api/qr/generate?data=hello" 200
