@@ -20,11 +20,12 @@ wellKnown.get("/mcp/server-card.json", (c) => {
           type: "object",
           properties: {
             city: { type: "string", description: "City name (e.g. London)" },
-            lat: { type: "number", description: "Latitude" },
-            lon: { type: "number", description: "Longitude" },
-            forecast: { type: "boolean", description: "Return 5-day forecast instead of current" },
+            lat: { type: "number", description: "Latitude coordinate" },
+            lon: { type: "number", description: "Longitude coordinate" },
+            forecast: { type: "boolean", description: "Return 5-day forecast instead of current conditions" },
           },
         },
+        annotations: { title: "Weather", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "get_fx_rate",
@@ -32,30 +33,33 @@ wellKnown.get("/mcp/server-card.json", (c) => {
         inputSchema: {
           type: "object",
           properties: {
-            from: { type: "string", description: "Source currency (e.g. USD)" },
-            to: { type: "string", description: "Target currency (e.g. GBP)" },
+            from: { type: "string", description: "Source currency code (e.g. USD)" },
+            to: { type: "string", description: "Target currency code (e.g. GBP)" },
             amount: { type: "number", description: "Amount to convert (default 1)" },
           },
           required: ["from", "to"],
         },
+        annotations: { title: "FX Rates", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "get_crypto_price",
         description: "Get live cryptocurrency price and market data (2000+ tokens)",
         inputSchema: {
           type: "object",
-          properties: { symbol: { type: "string", description: "Crypto symbol (e.g. bitcoin)" } },
+          properties: { symbol: { type: "string", description: "Crypto symbol or ID (e.g. bitcoin, ethereum)" } },
           required: ["symbol"],
         },
+        annotations: { title: "Crypto Price", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "get_stock_quote",
         description: "Get a live stock quote by ticker symbol (10,000+ tickers)",
         inputSchema: {
           type: "object",
-          properties: { symbol: { type: "string", description: "Ticker symbol (e.g. AAPL)" } },
+          properties: { symbol: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA)" } },
           required: ["symbol"],
         },
+        annotations: { title: "Stock Quote", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "search_papers",
@@ -63,11 +67,12 @@ wellKnown.get("/mcp/server-card.json", (c) => {
         inputSchema: {
           type: "object",
           properties: {
-            query: { type: "string", description: "Search query" },
-            page: { type: "number", description: "Page number (default 1)" },
+            query: { type: "string", description: "Search query for academic papers" },
+            page: { type: "number", description: "Page number for pagination (default 1)" },
           },
           required: ["query"],
         },
+        annotations: { title: "Paper Search", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "search_filings",
@@ -75,37 +80,41 @@ wellKnown.get("/mcp/server-card.json", (c) => {
         inputSchema: {
           type: "object",
           properties: {
-            query: { type: "string", description: "Search query" },
-            forms: { type: "string", description: "Form types (e.g. 10-K,10-Q)" },
+            query: { type: "string", description: "Full-text search query for SEC filings" },
+            forms: { type: "string", description: "Comma-separated form types to filter (e.g. 10-K,10-Q)" },
           },
           required: ["query"],
         },
+        annotations: { title: "SEC Filing Search", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "get_company_filings",
         description: "Get recent SEC filings for a company by ticker",
         inputSchema: {
           type: "object",
-          properties: { ticker: { type: "string", description: "Stock ticker (e.g. AAPL)" } },
+          properties: { ticker: { type: "string", description: "Company stock ticker (e.g. AAPL)" } },
           required: ["ticker"],
         },
+        annotations: { title: "Company Filings", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "get_ip_info",
         description: "Get geolocation info for an IP address (country, city, ISP, coordinates)",
         inputSchema: {
           type: "object",
-          properties: { ip: { type: "string", description: "IP address (omit for caller's IP)" } },
+          properties: { ip: { type: "string", description: "IP address to look up (omit for caller's IP)" } },
         },
+        annotations: { title: "IP Geolocation", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "analyze_sentiment",
         description: "AI-powered news sentiment analysis on any topic using Claude",
         inputSchema: {
           type: "object",
-          properties: { topic: { type: "string", description: "Topic to analyze (e.g. Tesla stock)" } },
+          properties: { topic: { type: "string", description: "Topic to analyze sentiment for (e.g. Tesla stock)" } },
           required: ["topic"],
         },
+        annotations: { title: "Sentiment Analysis", readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
       },
       {
         name: "get_odds",
@@ -115,47 +124,59 @@ wellKnown.get("/mcp/server-card.json", (c) => {
           properties: { sport: { type: "string", description: "Sport key (e.g. soccer_epl, basketball_nba)" } },
           required: ["sport"],
         },
+        annotations: { title: "Betting Odds", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "search_food",
         description: "Search food nutrition data — calories, allergens, ingredients (3M+ products)",
         inputSchema: {
           type: "object",
-          properties: { query: { type: "string", description: "Food search query (e.g. banana)" } },
+          properties: { query: { type: "string", description: "Food name or product to search (e.g. banana, oat milk)" } },
           required: ["query"],
         },
+        annotations: { title: "Food Nutrition", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "get_domain_info",
         description: "Get WHOIS, DNS records, SSL certificate info for a domain",
         inputSchema: {
           type: "object",
-          properties: { domain: { type: "string", description: "Domain name (e.g. example.com)" } },
+          properties: { domain: { type: "string", description: "Domain name to look up (e.g. example.com)" } },
           required: ["domain"],
         },
+        annotations: { title: "Domain WHOIS", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "verify_vat",
         description: "Verify an EU or UK VAT number via VIES and HMRC",
         inputSchema: {
           type: "object",
-          properties: { number: { type: "string", description: "VAT number (e.g. GB123456789)" } },
+          properties: { number: { type: "string", description: "VAT number including country prefix (e.g. GB123456789)" } },
           required: ["number"],
         },
+        annotations: { title: "VAT Verification", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "check_sanctions",
         description: "Check a name against global sanctions lists (OFAC, UN Security Council, UK HMT)",
         inputSchema: {
           type: "object",
-          properties: { name: { type: "string", description: "Name to check" } },
+          properties: { name: { type: "string", description: "Person or entity name to check against sanctions lists" } },
           required: ["name"],
         },
+        annotations: { title: "Sanctions Check", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       {
         name: "get_history_today",
         description: "Get historical events that happened on today's date (Wikipedia)",
-        inputSchema: { type: "object", properties: {} },
+        inputSchema: {
+          type: "object",
+          properties: {
+            month: { type: "number", description: "Month number 1-12 (default: today)" },
+            day: { type: "number", description: "Day of month 1-31 (default: today)" },
+          },
+        },
+        annotations: { title: "This Day in History", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       },
       {
         name: "generate_qr",
@@ -163,20 +184,22 @@ wellKnown.get("/mcp/server-card.json", (c) => {
         inputSchema: {
           type: "object",
           properties: {
-            data: { type: "string", description: "Text or URL to encode" },
+            data: { type: "string", description: "Text or URL to encode in QR code" },
             format: { type: "string", description: "Output format: svg, png, or json (default json)" },
           },
           required: ["data"],
         },
+        annotations: { title: "QR Generator", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       },
       {
         name: "research_topic",
         description: "AI research brief — synthesizes news, academic papers, and Wikipedia into a briefing",
         inputSchema: {
           type: "object",
-          properties: { topic: { type: "string", description: "Research topic" } },
+          properties: { topic: { type: "string", description: "Research topic to generate a brief on" } },
           required: ["topic"],
         },
+        annotations: { title: "Research Brief", readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
       },
       {
         name: "summarize_url",
@@ -184,11 +207,12 @@ wellKnown.get("/mcp/server-card.json", (c) => {
         inputSchema: {
           type: "object",
           properties: {
-            url: { type: "string", description: "URL to summarize" },
-            length: { type: "string", description: "Summary length: short, medium, long (default medium)" },
+            url: { type: "string", description: "Full URL of the web page to summarize" },
+            length: { type: "string", description: "Summary length: short, medium, or long (default medium)" },
           },
           required: ["url"],
         },
+        annotations: { title: "URL Summarizer", readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
       },
     ],
   }, 200, { "Cache-Control": "public, max-age=86400" });
