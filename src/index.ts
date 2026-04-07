@@ -179,7 +179,7 @@ const LANDING_HTML = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DevDrops — x402 Data APIs for the Agent Economy</title>
-<meta name="description" content="22 pay-per-query data APIs powered by x402 micropayments. Property intelligence, prediction markets, sports odds, regulatory feeds, weather, FX, and more. No API keys. No subscriptions. Just USDC.">
+<meta name="description" content="30 pay-per-query data APIs powered by x402 micropayments. Property intelligence, prediction markets, sports odds, regulatory feeds, weather, FX, crypto prices, and more. No API keys. No subscriptions. Just USDC.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
