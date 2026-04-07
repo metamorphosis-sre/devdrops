@@ -567,6 +567,35 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 </div>
 </div>
 
+<div class="tier-label">Tier 5 — AI Endpoints + Agent Infrastructure</div>
+<div class="product-grid">
+<div class="product">
+<div class="product-head"><span class="product-name">Universal MCP server</span><span class="product-price">$0.01</span></div>
+<p class="product-desc">18 DevDrops tools exposed via JSON-RPC 2.0. Works with Claude, GPT, Cursor, and any MCP-compatible AI agent out of the box.</p>
+<span class="product-tag tag-new">Agent-native</span>
+</div>
+<div class="product">
+<div class="product-head"><span class="product-name">URL summarizer</span><span class="product-price">$0.02</span></div>
+<p class="product-desc">Fetch any URL and get a clean AI summary — title, key points, word count. Short / medium / long length control.</p>
+<span class="product-tag tag-new">Claude-powered</span>
+</div>
+<div class="product">
+<div class="product-head"><span class="product-name">Text classifier</span><span class="product-price">$0.02</span></div>
+<p class="product-desc">Classify any text into custom or default categories. Returns primary category, confidence score, and reasoning.</p>
+<span class="product-tag tag-new">Claude-powered</span>
+</div>
+<div class="product">
+<div class="product-head"><span class="product-name">Entity extractor</span><span class="product-price">$0.02</span></div>
+<p class="product-desc">Named entity recognition — extract persons, organizations, locations, dates, money amounts, and events from any text.</p>
+<span class="product-tag tag-new">Claude-powered</span>
+</div>
+<div class="product" style="grid-column:1/-1">
+<div class="product-head"><span class="product-name">Prepaid credit bundles</span><span class="product-price">$5 / $25 / $100</span></div>
+<p class="product-desc">Buy once, query many. Starter ($5 → 500 queries), Pro ($25 → 2,750 queries, 10% bonus), Business ($100 → 12,000 queries, 20% bonus). No per-transaction gas fees.</p>
+<span class="product-tag tag-new">Skip the gas</span>
+</div>
+</div>
+
 </div>
 </section>
 

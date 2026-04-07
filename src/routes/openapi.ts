@@ -9,9 +9,12 @@ const SPEC = {
     title: "DevDrops",
     version: "1.0.0",
     description:
-      "25 pay-per-query data APIs powered by the x402 micropayment protocol. " +
+      "43 pay-per-query data APIs powered by the x402 micropayment protocol. " +
       "Send a request, receive HTTP 402 with a USDC price, pay on Base (Coinbase L2), get structured JSON. " +
-      "No API keys, no subscriptions, no accounts required.",
+      "No API keys, no subscriptions, no accounts required. " +
+      "Free tier: 5 queries/day/IP on FX, crypto, weather, IP, QR, time, and history endpoints. " +
+      "MCP server at /api/mcp exposes 18 tools for AI agents via JSON-RPC 2.0. " +
+      "Prepaid credit bundles available at /api/credits.",
     contact: { url: "https://devdrops.run" },
     "x-payment-protocol": "x402",
     "x-payment-network": "eip155:8453",
@@ -43,6 +46,9 @@ const SPEC = {
     { name: "Signals", description: "AI cross-market signals (Claude)" },
     { name: "Documents", description: "AI document summarisation (Claude)" },
     { name: "Research", description: "AI research briefs (Claude)" },
+    { name: "AI", description: "AI-powered endpoints — summarize, classify, entity extraction (Claude)" },
+    { name: "MCP", description: "Universal MCP server — 18 tools for AI agents via JSON-RPC 2.0" },
+    { name: "Credits", description: "Prepaid credit bundles — buy USDC credit, spend without per-tx gas" },
   ],
   paths: {
     // ── FX ──────────────────────────────────────────────────────────────────
@@ -922,6 +928,178 @@ const SPEC = {
         },
         responses: {
           "200": { description: "Extracted data" },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "402": { $ref: "#/components/responses/PaymentRequired" },
+        },
+      },
+    },
+
+    // ── Summarize ─────────────────────────────────────────────────────────────
+    "/api/summarize/url": {
+      get: {
+        tags: ["AI"],
+        summary: "Summarize a web page",
+        description: "Fetches a URL, extracts text, and summarizes with Claude. **Price: $0.02 USDC**",
+        "x-price-usd": 0.02,
+        parameters: [
+          { name: "url", in: "query", required: true, schema: { type: "string" }, description: "URL to summarize" },
+          { name: "length", in: "query", schema: { type: "string", enum: ["short", "medium", "long"], default: "medium" }, description: "Summary length" },
+        ],
+        responses: {
+          "200": { description: "Summary with title, key points, and word count" },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "402": { $ref: "#/components/responses/PaymentRequired" },
+        },
+      },
+    },
+
+    // ── Classify ──────────────────────────────────────────────────────────────
+    "/api/classify/text": {
+      post: {
+        tags: ["AI"],
+        summary: "Classify text into categories",
+        description: "AI-powered text classification using Claude. **Price: $0.02 USDC**",
+        "x-price-usd": 0.02,
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["text"],
+                properties: {
+                  text: { type: "string", description: "Text to classify (max 10,000 chars)" },
+                  categories: { type: "array", items: { type: "string" }, description: "Custom categories (optional, defaults to 10 standard categories)" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Classification with primary category, confidence, and reasoning" },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "402": { $ref: "#/components/responses/PaymentRequired" },
+        },
+      },
+    },
+
+    // ── Entities ──────────────────────────────────────────────────────────────
+    "/api/entities/extract": {
+      post: {
+        tags: ["AI"],
+        summary: "Extract named entities from text",
+        description: "Named entity recognition — persons, organizations, locations, dates, money, products, events. **Price: $0.02 USDC**",
+        "x-price-usd": 0.02,
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["text"],
+                properties: {
+                  text: { type: "string", description: "Text to extract entities from (max 10,000 chars)" },
+                  types: { type: "array", items: { type: "string" }, description: "Entity types to extract (optional)" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Extracted entities with type, confidence, and context" },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "402": { $ref: "#/components/responses/PaymentRequired" },
+        },
+      },
+    },
+
+    // ── MCP ───────────────────────────────────────────────────────────────────
+    "/api/mcp": {
+      get: {
+        tags: ["MCP"],
+        summary: "MCP server discovery",
+        description: "Returns MCP server capabilities and tool list. Free — no payment required.",
+        "x-price-usd": 0,
+        responses: {
+          "200": { description: "MCP server info with 18 tool definitions" },
+        },
+      },
+      post: {
+        tags: ["MCP"],
+        summary: "MCP JSON-RPC tool call",
+        description: "Universal MCP server exposing 18 DevDrops tools to AI agents. JSON-RPC 2.0. **Price: $0.01 USDC per call**",
+        "x-price-usd": 0.01,
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["jsonrpc", "method"],
+                properties: {
+                  jsonrpc: { type: "string", const: "2.0" },
+                  id: { type: "number" },
+                  method: { type: "string", enum: ["initialize", "tools/list", "tools/call", "notifications/initialized"] },
+                  params: { type: "object" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "JSON-RPC response" },
+          "402": { $ref: "#/components/responses/PaymentRequired" },
+        },
+      },
+    },
+
+    // ── Credits ───────────────────────────────────────────────────────────────
+    "/api/credits": {
+      get: {
+        tags: ["Credits"],
+        summary: "Credit bundle info",
+        description: "Returns available prepaid credit bundles and pricing. Free.",
+        "x-price-usd": 0,
+        responses: { "200": { description: "Bundle definitions and examples" } },
+      },
+    },
+    "/api/credits/balance": {
+      get: {
+        tags: ["Credits"],
+        summary: "Check credit balance",
+        description: "Returns current credit balance and recent transactions for a wallet. Free.",
+        "x-price-usd": 0,
+        parameters: [
+          { name: "wallet", in: "query", required: true, schema: { type: "string" }, description: "Wallet address (0x...)" },
+        ],
+        responses: {
+          "200": { description: "Balance and transaction history" },
+          "400": { $ref: "#/components/responses/BadRequest" },
+        },
+      },
+    },
+    "/api/credits/purchase/{bundle}": {
+      post: {
+        tags: ["Credits"],
+        summary: "Purchase a credit bundle",
+        description: "Buy prepaid credits via x402. Starter=$5 (500 queries), Pro=$25 (2,750 queries, +10%), Business=$100 (12,000 queries, +20%).",
+        parameters: [
+          { name: "bundle", in: "path", required: true, schema: { type: "string", enum: ["starter", "pro", "business"] } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["wallet"],
+                properties: { wallet: { type: "string", description: "Your wallet address (0x...)" } },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Credits added, new balance returned" },
           "400": { $ref: "#/components/responses/BadRequest" },
           "402": { $ref: "#/components/responses/PaymentRequired" },
         },
