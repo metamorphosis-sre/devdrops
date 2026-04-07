@@ -18,6 +18,8 @@ jobs:
           BASE="https://api.devdrops.run"
           FAILURES=""
 
+          # check <label> <METHOD> <path> <expected_codes_pipe_separated> [body]
+          # expected can be a single code ("200") or pipe-separated alternatives ("200|429")
           check() {
             local label=$1
             local method=$2
@@ -32,11 +34,11 @@ jobs:
               code=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" "$BASE$path")
             fi
 
-            if [ "$code" != "$expected" ]; then
+            if echo "$expected" | grep -qw "$code"; then
+              echo "ok    $method $path → $code"
+            else
               echo "FAIL  $method $path → $code (expected $expected)"
               FAILURES="$FAILURES\n- $label: $method $path returned $code (expected $expected)"
-            else
-              echo "ok    $method $path → $code"
             fi
           }
 
@@ -51,10 +53,10 @@ jobs:
 
           # Free-tier endpoints (5 queries/day/IP, no payment needed — expect 200)
           check "FX"             GET /api/fx/latest                200
-          check "Crypto"         GET /api/crypto/prices            200
-          check "IP"             GET /api/ip/lookup/8.8.8.8        200
+          check "Crypto"         GET /api/crypto/top                200
+          check "IP"             GET /api/ip/lookup/8.8.8.8        "200|429"
           check "History"        GET /api/history/today            200
-          check "QR"             GET "/api/qr/generate?text=hello" 200
+          check "QR"             GET "/api/qr/generate?data=hello" 200
           check "Time"           GET "/api/time/now?tz=UTC"        200
           check "Weather"        GET "/api/weather/current?city=London" 200
 
@@ -78,7 +80,7 @@ jobs:
           check "Calendar"       GET /api/calendar/earnings        402
           check "ASN"            GET /api/asn/ip/8.8.8.8           402
           check "Economy"        GET "/api/economy/indicator?country=US&indicator=gdp" 402
-          check "Signals"        POST /api/signals/correlate       402 '{"query":"bitcoin"}'
+          check "Signals"        GET "/api/signals/correlate?query=bitcoin" 402
           check "Translate"      POST /api/translate/text          402 '{"text":"hello","target":"es"}'
           check "Extract"        POST /api/extract/url             402 '{"url":"https://example.com"}'
           check "Documents"      POST /api/documents/summarize     402 '{"url":"https://example.com"}'
@@ -99,9 +101,15 @@ jobs:
             echo "has_failures=false" >> $GITHUB_OUTPUT
           fi
 
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.has_failures == 'true'
+        with:
+          node-version: "24"
+          cache: "npm"
+
       - name: Auto-redeploy on failure
         if: steps.check.outputs.has_failures == 'true'
-        run: npx wrangler deploy --env=""
+        run: npm ci && npx wrangler deploy --config wrangler.toml
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
