@@ -35,7 +35,8 @@ health.get("/", async (c) => {
     checks.r2 = "not_configured";
   }
 
-  const allOk = Object.values(checks).every((v) => v === "ok");
+  // "not_configured" is expected for optional bindings (R2) — only "fail" degrades status
+  const allOk = !Object.values(checks).includes("fail");
 
   return c.json(
     {
