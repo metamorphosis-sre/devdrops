@@ -299,7 +299,8 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <p class="hero-sub">30 pay-per-query intelligence feeds powered by x402 micropayments. No API keys. No subscriptions. No human in the loop. Your agent sends a request, pays USDC, gets data.</p>
 <div class="hero-code">
 <span class="comment">// One request. Instant data. Fractions of a cent.</span><br>
-<span class="kw">const</span> response = <span class="kw">await</span> fetchWithPayment(<br>
+<span class="kw">const</span> pay = wrapFetchWithPayment(fetch, client);<br>
+<span class="kw">const</span> res = <span class="kw">await</span> pay(<br>
 &nbsp;&nbsp;<span class="str">"https://api.devdrops.run/api/predictions/markets"</span><br>
 );<br><br>
 <span class="comment">// → { polymarket: [...], manifold: [...] }</span><br>
