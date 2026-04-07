@@ -70,4 +70,31 @@ INSERT OR IGNORE INTO data_sources (product, source_name, source_url, is_primary
 
 -- Tenders (UK Contracts Finder + SAM.gov)
 ('tenders', 'contracts-finder', 'https://www.contractsfinder.service.gov.uk/Published/Notices/OCDS/Search', 1, 1),
-('tenders', 'sam-gov', 'https://api.sam.gov', 0, 1);
+('tenders', 'sam-gov', 'https://api.sam.gov', 0, 1),
+
+-- VAT verification (EU VIES + UK HMRC)
+('vat', 'eu-vies', 'https://ec.europa.eu/taxation_customs/vies/rest-api/ms', 1, 1),
+('vat', 'uk-hmrc-vat', 'https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup/GB123456789', 0, 1),
+
+-- Stocks (Yahoo Finance)
+('stocks', 'yahoo-finance', 'https://query1.finance.yahoo.com/v8/finance/chart/AAPL?interval=1d&range=1d', 1, 1),
+
+-- Extract (self-contained, no upstream dependency)
+('extract', 'self', 'https://api.devdrops.run/health', 1, 1),
+
+-- Sanctions (OFAC US Treasury)
+('sanctions', 'ofac-treasury', 'https://www.treasury.gov/ofac/downloads/sdn_mini.csv', 1, 1),
+('sanctions', 'un-sanctions', 'https://scsanctions.un.org/resources/xml/en/consolidated.xml', 0, 1),
+
+-- Company enrichment (Companies House)
+('company', 'companies-house', 'https://api.company-information.service.gov.uk', 1, 1),
+('company', 'opencorporates', 'https://api.opencorporates.com/v0.4/companies/search?q=test', 0, 1),
+
+-- QR code generator (qrserver.com)
+('qr', 'qrserver', 'https://api.qrserver.com/v1/create-qr-code/?data=test&size=50x50', 1, 1),
+
+-- Crypto (CoinCap)
+('crypto', 'coincap', 'https://api.coincap.io/v2/assets?limit=1', 1, 1),
+
+-- Time/holidays (Nager.Date)
+('time', 'nager-date', 'https://date.nager.at/api/v3/PublicHolidays/2026/GB', 1, 1);

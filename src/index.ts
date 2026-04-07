@@ -47,6 +47,13 @@ import qr from "./routes/qr";
 import crypto from "./routes/crypto";
 import time from "./routes/time";
 
+// Group E: New data/intelligence products
+import vat from "./routes/vat";
+import stocks from "./routes/stocks";
+import extract from "./routes/extract";
+import sanctions from "./routes/sanctions";
+import company from "./routes/company";
+
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -125,6 +132,13 @@ app.route("/api/signals", signals);
 app.route("/api/qr", qr);
 app.route("/api/crypto", crypto);
 app.route("/api/time", time);
+
+// Group E: New data/intelligence products
+app.route("/api/vat", vat);
+app.route("/api/stocks", stocks);
+app.route("/api/extract", extract);
+app.route("/api/sanctions", sanctions);
+app.route("/api/company", company);
 
 // Catch-all for unmatched API routes
 app.all("/api/*", (c) => {
@@ -260,7 +274,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <section class="hero">
 <div class="container">
 <h1>Data APIs that <em>agents pay for</em></h1>
-<p class="hero-sub">25 pay-per-query intelligence feeds powered by x402 micropayments. No API keys. No subscriptions. No human in the loop. Your agent sends a request, pays USDC, gets data.</p>
+<p class="hero-sub">30 pay-per-query intelligence feeds powered by x402 micropayments. No API keys. No subscriptions. No human in the loop. Your agent sends a request, pays USDC, gets data.</p>
 <div class="hero-code">
 <span class="comment">// One request. Instant data. Fractions of a cent.</span><br>
 <span class="kw">const</span> response = <span class="kw">await</span> fetchWithPayment(<br>
@@ -274,7 +288,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 
 <div class="container">
 <div class="stats">
-<div class="stat"><span class="stat-val">25</span><span class="stat-label">Data products</span></div>
+<div class="stat"><span class="stat-val">30</span><span class="stat-label">Data products</span></div>
 <div class="stat"><span class="stat-val">$0.001</span><span class="stat-label">Starting price</span></div>
 <div class="stat"><span class="stat-val">&lt;2s</span><span class="stat-label">Settlement</span></div>
 <div class="stat"><span class="stat-val">0</span><span class="stat-label">API keys needed</span></div>
@@ -425,6 +439,35 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="product-head"><span class="product-name">Property MCP server</span><span class="product-price">$0.01</span></div>
 <p class="product-desc">Property intelligence exposed as MCP tools. Claude, GPT, and Gemini agents call it natively without REST boilerplate.</p>
 <span class="product-tag tag-gap">No competition</span>
+</div>
+</div>
+
+<div class="tier-label">Tier 4 — New Intelligence Products</div>
+<div class="product-grid">
+<div class="product">
+<div class="product-head"><span class="product-name">VAT number verification</span><span class="product-price">$0.01</span></div>
+<p class="product-desc">Verify EU and UK VAT numbers. Returns registered business name and address via EU VIES and UK HMRC APIs.</p>
+<span class="product-tag tag-new">First x402-native</span>
+</div>
+<div class="product">
+<div class="product-head"><span class="product-name">Stock prices & markets</span><span class="product-price">$0.005</span></div>
+<p class="product-desc">Live quotes, historical prices, market movers. 10,000+ tickers. Search by company name. Not financial advice.</p>
+<span class="product-tag tag-new">First x402-native</span>
+</div>
+<div class="product">
+<div class="product-head"><span class="product-name">URL content extractor</span><span class="product-price">$0.005</span></div>
+<p class="product-desc">Submit any URL → get clean text, title, author, publish date, headings, links. Ad-stripping included.</p>
+<span class="product-tag tag-new">First x402-native</span>
+</div>
+<div class="product">
+<div class="product-head"><span class="product-name">Sanctions screening</span><span class="product-price">$0.05</span></div>
+<p class="product-desc">Fuzzy name matching against OFAC SDN, UN Security Council, and UK HMT sanctions lists. Confidence scores included.</p>
+<span class="product-tag tag-gap">No x402 alternative</span>
+</div>
+<div class="product" style="grid-column:1/-1">
+<div class="product-head"><span class="product-name">Company enrichment</span><span class="product-price">$0.02</span></div>
+<p class="product-desc">Full UK company profile: officers, PSCs, charges, filings. Search by name. Enrich from domain. Companies House + OpenCorporates.</p>
+<span class="product-tag tag-gap">Market gap</span>
 </div>
 </div>
 

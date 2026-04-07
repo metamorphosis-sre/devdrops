@@ -36,10 +36,10 @@ export async function runHealthCheck(env: Env) {
 
     // Log health check result
     await env.DB.prepare(
-      `INSERT INTO health_log (source_name, status, response_time_ms, error_message)
-       VALUES (?, ?, ?, ?)`
+      `INSERT INTO health_log (product, source_name, status, response_time_ms, error_message)
+       VALUES (?, ?, ?, ?, ?)`
     )
-      .bind(source.source_name, status, elapsed, errorMessage ?? null)
+      .bind(source.product, source.source_name, status, elapsed, errorMessage ?? null)
       .run();
 
     // Update source tracking

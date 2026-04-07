@@ -41,6 +41,14 @@ export const pricingMap: PricingMap = {
   "GET /api/qr/*": { price: "$0.001", description: "QR code generator — SVG, PNG, or base64 JSON" },
   "GET /api/crypto/*": { price: "$0.001", description: "Crypto token prices and market data via CoinCap" },
   "GET /api/time/*": { price: "$0.001", description: "Timezone conversion, public holidays, business day checks" },
+
+  // New intelligence products
+  "GET /api/vat/*": { price: "$0.01", description: "EU and UK VAT number verification via VIES and HMRC" },
+  "GET /api/stocks/*": { price: "$0.005", description: "Live stock quotes, history, movers — 10,000+ tickers" },
+  "GET /api/extract/*": { price: "$0.005", description: "URL content extraction — clean text, metadata, links" },
+  "POST /api/extract/*": { price: "$0.005", description: "HTML content extraction from submitted markup" },
+  "GET /api/sanctions/*": { price: "$0.05", description: "Sanctions screening — OFAC, UN, UK HMT lists with fuzzy matching" },
+  "GET /api/company/*": { price: "$0.02", description: "Company enrichment — UK Companies House, officers, PSCs, charges" },
 };
 
 // Build the x402 routes config from the pricing map.

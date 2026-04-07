@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Env } from "../types";
-import { getCached, setCache } from "../lib/cache";
+import { getTiered, setTiered } from "../lib/cache";
 import { fetchUpstream } from "../lib/fetch";
 
 const PRODUCT = "history";
@@ -28,7 +28,7 @@ async function fetchDay(c: any, mm: string, dd: string) {
   const type = c.req.query("type") ?? "all"; // all, selected, births, deaths, events, holidays
   const cacheKey = `${mm}-${dd}:${type}`;
 
-  const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
+  const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
   const url = `${BASE_URL}/${type}/${mm}/${dd}`;
@@ -52,7 +52,7 @@ async function fetchDay(c: any, mm: string, dd: string) {
     }
   }
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
   return c.json({ product: PRODUCT, date: `${mm}-${dd}`, cached: false, data, timestamp: new Date().toISOString() });
 }
 

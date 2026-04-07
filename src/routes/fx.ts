@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Env } from "../types";
-import { getCached, setCache } from "../lib/cache";
+import { getTiered, setTiered } from "../lib/cache";
 import { fetchUpstream } from "../lib/fetch";
 
 const PRODUCT = "fx";
@@ -15,7 +15,7 @@ fx.get("/latest", async (c) => {
   const symbols = c.req.query("symbols");
   const cacheKey = `latest:${base}:${symbols ?? "all"}`;
 
-  const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
+  const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
   let url = `${BASE_URL}/latest?base=${base}`;
@@ -24,7 +24,7 @@ fx.get("/latest", async (c) => {
   const res = await fetchUpstream(url);
   const data = await res.json();
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
 
@@ -56,13 +56,13 @@ fx.get("/convert", async (c) => {
 // GET /api/fx/currencies — list available currencies
 fx.get("/currencies", async (c) => {
   const cacheKey = "currencies";
-  const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
+  const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
   const res = await fetchUpstream(`${BASE_URL}/currencies`);
   const data = await res.json();
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, 86400); // 24h cache
+  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, 86400); // 24h cache
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
 
@@ -73,13 +73,13 @@ fx.get("/historical", async (c) => {
   if (!date) return c.json({ error: "Missing 'date' query param (YYYY-MM-DD)" }, 400);
 
   const cacheKey = `hist:${date}:${base}`;
-  const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
+  const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
   const res = await fetchUpstream(`${BASE_URL}/${date}?base=${base}`);
   const data = await res.json();
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, 86400);
+  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, 86400);
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
 

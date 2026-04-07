@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Env } from "../types";
-import { getCached, setCache } from "../lib/cache";
+import { getTiered, setTiered } from "../lib/cache";
 import { fetchUpstream, missingKeyResponse } from "../lib/fetch";
 
 const PRODUCT = "weather";
@@ -21,7 +21,7 @@ weather.get("/current", async (c) => {
   const q = city ? `q=${encodeURIComponent(city)}` : `lat=${lat}&lon=${lon}`;
   const cacheKey = `current:${city ?? `${lat},${lon}`}`;
 
-  const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
+  const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
   const url = `https://api.openweathermap.org/data/2.5/weather?${q}&units=metric&appid=${c.env.WEATHER_API_KEY}`;
@@ -42,7 +42,7 @@ weather.get("/current", async (c) => {
     sunset: raw.sys?.sunset ? new Date(raw.sys.sunset * 1000).toISOString() : null,
   };
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
 
@@ -59,7 +59,7 @@ weather.get("/forecast", async (c) => {
   const q = city ? `q=${encodeURIComponent(city)}` : `lat=${lat}&lon=${lon}`;
   const cacheKey = `forecast:${city ?? `${lat},${lon}`}`;
 
-  const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
+  const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
   const url = `https://api.openweathermap.org/data/2.5/forecast?${q}&units=metric&appid=${c.env.WEATHER_API_KEY}`;
@@ -80,7 +80,7 @@ weather.get("/forecast", async (c) => {
     })),
   };
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
   return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
 });
 
