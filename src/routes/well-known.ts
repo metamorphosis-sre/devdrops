@@ -10,6 +10,22 @@ wellKnown.get("/mcp/server-card.json", (c) => {
     serverInfo: { name: "devdrops", version: "1.0.0" },
     description: "43 pay-per-query data APIs as MCP tools. Weather, FX, stocks, crypto, SEC filings, sanctions, sentiment, research, IP, and more. Pay $0.01 USDC per call via x402 on Base mainnet. Free discovery.",
     authentication: { required: false },
+    configSchema: {
+      type: "object",
+      properties: {
+        walletPrivateKey: {
+          type: "string",
+          description: "Private key for a Base mainnet wallet holding USDC. Used for x402 micropayments ($0.01/tool call). Optional — discovery and tool listing are free without payment.",
+        },
+        defaultCurrency: {
+          type: "string",
+          description: "Default base currency for FX rate lookups (e.g. USD, EUR, GBP). Optional, defaults to USD.",
+          default: "USD",
+        },
+      },
+      required: [],
+      additionalProperties: false,
+    },
     resources: [],
     prompts: [],
     tools: [
