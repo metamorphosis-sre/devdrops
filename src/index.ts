@@ -69,8 +69,8 @@ app.route("/catalog", catalog);
 app.route("/openapi.json", openapi);
 app.route("/.well-known", wellKnown);
 
-// Internal admin routes (no payment — not in pricing map)
-app.get("/api/sanctions/refresh", async (c) => {
+// Admin route — outside /api/* so payment middleware never runs
+app.get("/admin/sanctions/refresh", async (c) => {
   const { refreshSanctionsList } = await import("./routes/sanctions");
   const count = await refreshSanctionsList(c.env.CACHE);
   return c.json({ refreshed: true, entries_loaded: count, timestamp: new Date().toISOString() });
