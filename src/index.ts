@@ -8,6 +8,7 @@ import { buildX402Routes } from "./middleware/payment";
 import { corsMiddleware } from "./middleware/cors";
 import { transactionLogger } from "./middleware/logging";
 import { handleScheduled } from "./cron/handler";
+import { UpstreamError } from "./lib/fetch";
 
 // Free routes
 import health from "./routes/health";
@@ -152,6 +153,18 @@ app.route("/api/company", company);
 // Catch-all for unmatched API routes
 app.all("/api/*", (c) => {
   return c.json({ error: "Endpoint not found", catalog: "/catalog" }, 404);
+});
+
+// Global error handler — catches UpstreamError from any route that doesn't have its own try/catch
+app.onError((err, c) => {
+  if (err instanceof UpstreamError) {
+    return c.json(
+      { error: "Upstream service error", upstream_status: err.status, detail: err.message },
+      502
+    );
+  }
+  console.error("Unhandled error:", err);
+  return c.json({ error: "Internal server error" }, 500);
 });
 
 // Export handlers
@@ -492,17 +505,16 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="step-num">JS</div>
 <h3>Node.js / Bun</h3>
 <div class="hero-code" style="margin-top:8px;font-size:12px">
-<span class="kw">npm</span> install @x402/fetch viem<br><br>
-<span class="kw">import</span> { fetchWithPayment } <span class="kw">from</span> <span class="str">'@x402/fetch'</span>;<br>
-<span class="kw">import</span> { createWalletClient, http } <span class="kw">from</span> <span class="str">'viem'</span>;<br>
-<span class="kw">import</span> { privateKeyToAccount } <span class="kw">from</span> <span class="str">'viem/accounts'</span>;<br>
-<span class="kw">import</span> { base } <span class="kw">from</span> <span class="str">'viem/chains'</span>;<br><br>
+<span class="kw">npm</span> install @x402/fetch @x402/evm viem<br><br>
+<span class="kw">import</span> { wrapFetchWithPayment, x402Client } <span class="kw">from</span> <span class="str">'@x402/fetch'</span>;<br>
+<span class="kw">import</span> { ExactEvmScheme, toClientEvmSigner } <span class="kw">from</span> <span class="str">'@x402/evm'</span>;<br>
+<span class="kw">import</span> { privateKeyToAccount } <span class="kw">from</span> <span class="str">'viem/accounts'</span>;<br><br>
 <span class="kw">const</span> account = privateKeyToAccount(<span class="str">'0xYOUR_PRIVATE_KEY'</span>);<br>
-<span class="kw">const</span> wallet = createWalletClient({ account, chain: base, transport: http() });<br><br>
-<span class="kw">const</span> res = <span class="kw">await</span> fetchWithPayment(<br>
-&nbsp;&nbsp;<span class="str">'https://api.devdrops.run/api/fx/latest'</span>,<br>
-&nbsp;&nbsp;{ wallet }<br>
-);<br>
+<span class="kw">const</span> signer = toClientEvmSigner(account);<br>
+<span class="kw">const</span> client = <span class="kw">new</span> x402Client();<br>
+client.register(<span class="str">'eip155:8453'</span>, <span class="kw">new</span> ExactEvmScheme(signer));<br><br>
+<span class="kw">const</span> pay = wrapFetchWithPayment(fetch, client);<br>
+<span class="kw">const</span> res = <span class="kw">await</span> pay(<span class="str">'https://api.devdrops.run/api/fx/latest'</span>);<br>
 <span class="kw">const</span> data = <span class="kw">await</span> res.json();
 </div>
 </div>
