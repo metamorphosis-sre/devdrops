@@ -67,6 +67,13 @@ import image from "./routes/image";
 import inference from "./routes/inference";
 import utils from "./routes/utils";
 
+// Group H: New AI endpoints + MCP + credits
+import summarize from "./routes/summarize";
+import classify from "./routes/classify";
+import entities from "./routes/entities";
+import mcp from "./routes/mcp";
+import credits from "./routes/credits";
+
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -96,7 +103,11 @@ app.get("/admin/sanctions/refresh", async (c) => {
 app.use("/api/*", async (c, next) => {
   // MCP capability discovery (GET exact path) must be free — agents need to discover
   // tools before they can fund a wallet. POST (JSON-RPC tool calls) stays gated.
-  if (c.req.method === "GET" && c.req.path === "/api/property/mcp") {
+  if (c.req.method === "GET" && (c.req.path === "/api/property/mcp" || c.req.path === "/api/mcp")) {
+    return next();
+  }
+  // Credit balance check is free (no payment to check your balance)
+  if (c.req.method === "GET" && (c.req.path === "/api/credits" || c.req.path === "/api/credits/balance")) {
     return next();
   }
 
@@ -205,6 +216,13 @@ app.route("/api/image", image);
 app.route("/api/inference", inference);
 app.route("/api/utils", utils);
 
+// Group H: New AI endpoints + MCP + credits
+app.route("/api/summarize", summarize);
+app.route("/api/classify", classify);
+app.route("/api/entities", entities);
+app.route("/api/mcp", mcp);
+app.route("/api/credits", credits);
+
 // Catch-all for unmatched API routes
 app.all("/api/*", (c) => {
   return c.json({ error: "Endpoint not found", catalog: "/catalog" }, 404);
@@ -234,7 +252,7 @@ const LANDING_HTML = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DevDrops — x402 Data APIs for the Agent Economy</title>
-<meta name="description" content="30 pay-per-query data APIs powered by x402 micropayments. Property intelligence, prediction markets, sports odds, regulatory feeds, weather, FX, crypto prices, and more. No API keys. No subscriptions. Just USDC.">
+<meta name="description" content="43 pay-per-query data APIs powered by x402 micropayments. Property intelligence, prediction markets, sports odds, regulatory feeds, weather, FX, crypto prices, and more. No API keys. No subscriptions. Just USDC.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -351,7 +369,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <section class="hero">
 <div class="container">
 <h1>Data APIs that <em>agents pay for</em></h1>
-<p class="hero-sub">30 pay-per-query intelligence feeds powered by x402 micropayments. No API keys. No subscriptions. No human in the loop. Your agent sends a request, pays USDC, gets data.</p>
+<p class="hero-sub">43 pay-per-query intelligence feeds powered by x402 micropayments. No API keys. No subscriptions. No human in the loop. Your agent sends a request, pays USDC, gets data.</p>
 <div class="hero-code">
 <span class="comment">// One request. Instant data. Fractions of a cent.</span><br>
 <span class="kw">const</span> pay = wrapFetchWithPayment(fetch, client);<br>
@@ -366,7 +384,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 
 <div class="container">
 <div class="stats">
-<div class="stat"><span class="stat-val">30</span><span class="stat-label">Data products</span></div>
+<div class="stat"><span class="stat-val">43</span><span class="stat-label">Data products</span></div>
 <div class="stat"><span class="stat-val">$0.001</span><span class="stat-label">Starting price</span></div>
 <div class="stat"><span class="stat-val">&lt;2s</span><span class="stat-label">Settlement</span></div>
 <div class="stat"><span class="stat-val">0</span><span class="stat-label">API keys needed</span></div>

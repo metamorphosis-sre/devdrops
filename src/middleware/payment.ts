@@ -60,6 +60,19 @@ export const pricingMap: PricingMap = {
   "POST /api/inference/complete": { price: "$0.005", description: "LLM text completion — Llama 3.1, Mistral 7B via Cloudflare Workers AI" },
   "POST /api/inference/chat": { price: "$0.005", description: "LLM multi-turn chat — Llama 3.1, Mistral 7B via Cloudflare Workers AI" },
   "GET /api/utils/*": { price: "$0.001", description: "Utility functions — hash, IBAN validation, base64 encode/decode, UUID generation" },
+
+  // Group H: New AI endpoints
+  "GET /api/summarize/*": { price: "$0.02", description: "AI URL summarization — fetch, extract, and summarize any web page" },
+  "POST /api/classify/*": { price: "$0.02", description: "AI text classification into custom or default categories" },
+  "POST /api/entities/*": { price: "$0.02", description: "AI named entity recognition — persons, orgs, locations, dates, money" },
+
+  // Universal MCP server (POST for JSON-RPC tool calls; GET discovery is free)
+  "POST /api/mcp": { price: "$0.01", description: "Universal MCP server — 18 tools for AI agents via JSON-RPC" },
+
+  // Prepaid credit bundles
+  "POST /api/credits/purchase/starter": { price: "$5.00", description: "Starter credit bundle — 500 queries" },
+  "POST /api/credits/purchase/pro": { price: "$25.00", description: "Pro credit bundle — 2,750 queries (10% bonus)" },
+  "POST /api/credits/purchase/business": { price: "$100.00", description: "Business credit bundle — 12,000 queries (20% bonus)" },
 };
 
 // Build the x402 routes config from the pricing map.
