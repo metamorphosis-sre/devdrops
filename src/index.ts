@@ -277,8 +277,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.03;ba
 
 header{padding:20px 0;border-bottom:1px solid var(--border)}
 .header-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-.logo{font-size:15px;font-weight:700;letter-spacing:-.5px;color:var(--text)}
-.logo span{color:var(--accent)}
+.logo{display:flex;align-items:center;text-decoration:none}
+.logo svg{height:28px;width:auto}
 .header-links{display:flex;gap:16px;align-items:center}
 .header-links a{font-size:12px;color:var(--text3)}
 .header-links a:hover{color:var(--text)}
@@ -356,7 +356,14 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 
 <header>
 <div class="container header-inner">
-<div class="logo">dev<span>drops</span>.run</div>
+<a class="logo" href="/">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 228 56" fill="none">
+<defs><linearGradient id="dg" x1="22" y1="3" x2="22" y2="51" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+<path d="M22 3C11 14 5 22 5 34A17 17 0 0 0 39 34C39 22 33 14 22 3Z" fill="url(#dg)"/>
+<ellipse cx="15" cy="31" rx="3.5" ry="5.5" fill="white" fill-opacity="0.28" transform="rotate(-18 15 31)"/>
+<text x="52" y="39" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif" font-size="26" font-weight="800" letter-spacing="-0.5"><tspan fill="#6366f1">dev</tspan><tspan fill="#1e293b">drops</tspan></text>
+</svg>
+</a>
 <div class="header-links">
 <a href="/catalog">Catalog</a>
 <a href="/openapi.json">OpenAPI</a>

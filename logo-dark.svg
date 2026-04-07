@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 228 56" fill="none">
+  <defs>
+    <linearGradient id="dg" x1="22" y1="3" x2="22" y2="51" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Droplet -->
+  <path d="M22 3C11 14 5 22 5 34A17 17 0 0 0 39 34C39 22 33 14 22 3Z" fill="url(#dg)"/>
+  <!-- Inner shine -->
+  <ellipse cx="15" cy="31" rx="3.5" ry="5.5" fill="white" fill-opacity="0.28" transform="rotate(-18 15 31)"/>
+
+  <!-- Wordmark (light for dark backgrounds) -->
+  <text x="52" y="39"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+    font-size="26" font-weight="800" letter-spacing="-0.5">
+    <tspan fill="#a78bfa">dev</tspan><tspan fill="#f1f5f9">drops</tspan>
+  </text>
+</svg>
