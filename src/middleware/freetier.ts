@@ -4,7 +4,7 @@ import type { Env } from "../types";
 // Endpoints eligible for free tier (5 queries/IP/day, no payment required)
 // These are the best "try before you buy" endpoints — useful enough to hook developers
 // without giving away premium products.
-const FREE_TIER_PREFIXES = [
+export const FREE_TIER_PREFIXES = [
   "/api/fx/",
   "/api/fx/latest",
   "/api/crypto/",
@@ -16,8 +16,8 @@ const FREE_TIER_PREFIXES = [
   "/api/history/",
 ];
 
-const FREE_QUERIES_PER_DAY = 5;
-const FREE_TIER_KV_TTL = 86400; // 24 hours
+export const FREE_QUERIES_PER_DAY = 5;
+export const FREE_TIER_KV_TTL = 86400; // 24 hours
 
 function isFreeTierEligible(path: string): boolean {
   return FREE_TIER_PREFIXES.some((prefix) => path.startsWith(prefix));

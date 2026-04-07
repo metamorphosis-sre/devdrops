@@ -7,7 +7,7 @@ import type { Env } from "./types";
 import { buildX402Routes } from "./middleware/payment";
 import { corsMiddleware } from "./middleware/cors";
 import { transactionLogger } from "./middleware/logging";
-import { freeTierMiddleware } from "./middleware/freetier";
+import { FREE_TIER_PREFIXES, FREE_QUERIES_PER_DAY, FREE_TIER_KV_TTL } from "./middleware/freetier";
 import { handleScheduled } from "./cron/handler";
 import { UpstreamError } from "./lib/fetch";
 
@@ -90,10 +90,6 @@ app.get("/admin/sanctions/refresh", async (c) => {
   return c.json({ refreshed: true, entries_loaded: count, timestamp: new Date().toISOString() });
 });
 
-// Free tier — 5 queries/day/IP on utility endpoints, no payment required
-// Runs before the x402 middleware so eligible requests skip payment entirely
-app.use("/api/*", freeTierMiddleware);
-
 // x402 payment middleware on all /api/* routes
 // Skipped in development (facilitator requires on-chain scheme registration)
 app.use("/api/*", async (c, next) => {
@@ -103,9 +99,31 @@ app.use("/api/*", async (c, next) => {
     return next();
   }
 
-  // Free tier already handled this request — skip payment
-  if ((c as any).get?.("freeTierUsed")) {
-    return next();
+  // Free tier — 5 queries/day/IP on eligible endpoints, inline to avoid Hono context-variable issues
+  if (c.req.method === "GET" && FREE_TIER_PREFIXES.some((p) => c.req.path.startsWith(p))) {
+    const ip =
+      c.req.header("CF-Connecting-IP") ??
+      c.req.header("X-Forwarded-For")?.split(",")[0]?.trim() ??
+      "unknown";
+    if (ip !== "unknown") {
+      const kvKey = `freetier:${ip}:${new Date().toISOString().split("T")[0]}`;
+      try {
+        const raw = await c.env.CACHE.get(kvKey);
+        const used = raw ? parseInt(raw) : 0;
+        if (used < FREE_QUERIES_PER_DAY) {
+          const newCount = used + 1;
+          // fire-and-forget — don't add latency
+          c.env.CACHE.put(kvKey, String(newCount), { expirationTtl: FREE_TIER_KV_TTL });
+          c.header("X-Free-Tier-Remaining", String(FREE_QUERIES_PER_DAY - newCount));
+          c.header("X-Free-Tier-Limit", String(FREE_QUERIES_PER_DAY));
+          c.header("X-Free-Tier-Reset", "daily at midnight UTC");
+          c.header("X-Upgrade", "Pay per query with x402 — https://devdrops.run");
+          return next();
+        }
+      } catch {
+        // KV failure — fall through to payment
+      }
+    }
   }
 
   if (c.env.ENVIRONMENT === "development") {

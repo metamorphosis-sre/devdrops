@@ -49,12 +49,16 @@ jobs:
           check "MCP discovery"  GET /api/property/mcp             200
           check "Admin refresh"  GET /admin/sanctions/refresh      200
 
-          # Payment-gated (all should 402)
-          check "FX"             GET /api/fx/latest                402
-          check "Weather"        GET "/api/weather/current?city=London" 402
-          check "Crypto"         GET /api/crypto/prices            402
-          check "IP"             GET /api/ip/lookup/8.8.8.8        402
-          check "History"        GET /api/history/today            402
+          # Free-tier endpoints (5 queries/day/IP, no payment needed — expect 200)
+          check "FX"             GET /api/fx/latest                200
+          check "Crypto"         GET /api/crypto/prices            200
+          check "IP"             GET /api/ip/lookup/8.8.8.8        200
+          check "History"        GET /api/history/today            200
+          check "QR"             GET "/api/qr/generate?text=hello" 200
+          check "Time"           GET "/api/time/now?tz=UTC"        200
+          check "Weather"        GET "/api/weather/current?city=London" 200
+
+          # Payment-gated (should 402)
           check "Predictions"    GET /api/predictions/markets      402
           check "Odds"           GET /api/odds/sports              402
           check "Filings"        GET /api/filings/search?q=apple   402
@@ -63,8 +67,6 @@ jobs:
           check "Food"           GET /api/food/search?q=pasta      402
           check "Email verify"   GET /api/email-verify/check/test@test.com 402
           check "Tenders"        GET /api/tenders/uk/recent        402
-          check "QR"             GET "/api/qr/generate?text=hello" 402
-          check "Time"           GET "/api/time/now?tz=UTC"        402
           check "VAT"            GET "/api/vat/verify?number=GB123456789" 402
           check "Stocks"         GET "/api/stocks/quote?symbol=AAPL" 402
           check "Sanctions"      GET "/api/sanctions/search?name=test" 402
@@ -74,11 +76,15 @@ jobs:
           check "Location"       GET "/api/location/uk/report?postcode=SW1A1AA" 402
           check "Sentiment"      GET "/api/sentiment/analyze?query=bitcoin" 402
           check "Calendar"       GET /api/calendar/earnings        402
+          check "ASN"            GET /api/asn/ip/8.8.8.8           402
+          check "Economy"        GET "/api/economy/indicator?country=US&indicator=gdp" 402
           check "Signals"        POST /api/signals/correlate       402 '{"query":"bitcoin"}'
           check "Translate"      POST /api/translate/text          402 '{"text":"hello","target":"es"}'
           check "Extract"        POST /api/extract/url             402 '{"url":"https://example.com"}'
           check "Documents"      POST /api/documents/summarize     402 '{"url":"https://example.com"}'
           check "Research"       POST /api/research/brief          402 '{"topic":"AI"}'
+          check "Image gen"      POST /api/image/generate          402 '{"prompt":"a cat"}'
+          check "LLM complete"   POST /api/inference/complete      402 '{"prompt":"hello"}'
 
           # 404 catch-all
           check "404 catch-all"  GET /api/nonexistent              404
