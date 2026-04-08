@@ -15,6 +15,10 @@ export interface Env {
   CDP_API_KEY_ID: string;
   CDP_API_KEY_SECRET: string;  // PEM-encoded EC private key
 
+  // Stripe (set via `wrangler secret put`)
+  STRIPE_SECRET_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
+
   // Product API keys (set via `wrangler secret put`)
   WEATHER_API_KEY: string;          // OpenWeatherMap
   ODDS_API_KEY: string;             // The Odds API

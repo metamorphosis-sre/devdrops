@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "properties": {
+    "walletPrivateKey": {
+      "type": "string",
+      "description": "Private key for a Base mainnet wallet holding USDC. Used for x402 micropayments ($0.01/tool call). Optional — discovery and tool listing are free without payment."
+    },
+    "defaultCurrency": {
+      "type": "string",
+      "description": "Default base currency for FX rate lookups (e.g. USD, EUR, GBP). Optional, defaults to USD.",
+      "default": "USD"
+    }
+  },
+  "required": [],
+  "additionalProperties": false
+}

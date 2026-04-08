@@ -73,6 +73,7 @@ import classify from "./routes/classify";
 import entities from "./routes/entities";
 import mcp from "./routes/mcp";
 import credits from "./routes/credits";
+import checkout from "./routes/checkout";
 
 
 const app = new Hono<{ Bindings: Env }>();
@@ -82,6 +83,9 @@ app.use("*", corsMiddleware);
 
 // Landing page at root
 app.get("/", (c) => c.html(LANDING_HTML));
+
+// Buy page (credit card checkout)
+app.get("/buy", (c) => c.html(BUY_HTML));
 
 // Free routes (no payment required)
 app.route("/health", health);
@@ -101,6 +105,10 @@ app.get("/admin/sanctions/refresh", async (c) => {
 // x402 payment middleware on all /api/* routes
 // Skipped in development (facilitator requires on-chain scheme registration)
 app.use("/api/*", async (c, next) => {
+  // Stripe checkout and webhook routes must bypass x402 — they ARE the payment flow
+  if (c.req.path.startsWith("/api/checkout/")) {
+    return next();
+  }
   // MCP capability discovery (GET exact path) must be free — agents need to discover
   // tools before they can fund a wallet. POST (JSON-RPC tool calls) stays gated.
   if (c.req.method === "GET" && (c.req.path === "/api/property/mcp" || c.req.path === "/api/mcp")) {
@@ -222,6 +230,7 @@ app.route("/api/classify", classify);
 app.route("/api/entities", entities);
 app.route("/api/mcp", mcp);
 app.route("/api/credits", credits);
+app.route("/api/checkout", checkout);
 
 // Catch-all for unmatched API routes
 app.all("/api/*", (c) => {
@@ -366,6 +375,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 </a>
 <div class="header-links">
 <a href="/catalog">Catalog</a>
+<a href="/buy" style="color:var(--accent);font-weight:700">Buy Credits</a>
 <a href="/openapi.json">OpenAPI</a>
 <a href="/health">Status</a>
 </div>
@@ -715,4 +725,178 @@ x402 · Base · Cloudflare
 
 </body>
 </html>
-`
+`;
+
+const BUY_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buy Credits — DevDrops</title>
+<meta name="description" content="Buy DevDrops API credits with a credit card. No crypto wallet needed.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0a0b;--bg2:#111113;--bg3:#1a1a1e;
+--text:#e8e6e1;--text2:#9d9b95;--text3:#5c5b57;
+--accent:#22c55e;--accent2:#16a34a;
+--blue:#3b82f6;--purple:#a855f7;--coral:#f97316;
+--border:#222224;--border2:#2a2a2e;
+--mono:'JetBrains Mono',monospace;
+--radius:6px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.container{max-width:900px;margin:0 auto;padding:0 24px}
+header{padding:20px 0;border-bottom:1px solid var(--border)}
+.header-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;text-decoration:none}
+.logo svg{height:28px;width:auto}
+.header-links{display:flex;gap:16px;align-items:center}
+.header-links a{font-size:12px;color:var(--text3)}
+.header-links a:hover{color:var(--text)}
+h1{font-size:32px;font-weight:700;margin-bottom:8px}
+.subtitle{color:var(--text2);margin-bottom:48px;font-size:15px}
+.bundles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-bottom:48px}
+.bundle{border:1px solid var(--border);border-radius:var(--radius);padding:28px;background:var(--bg2);position:relative;transition:border-color .2s}
+.bundle:hover{border-color:var(--accent)}
+.bundle.popular{border-color:var(--accent)}
+.popular-tag{position:absolute;top:-10px;right:16px;background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;text-transform:uppercase}
+.bundle-name{font-size:13px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.bundle-price{font-size:36px;font-weight:700;margin-bottom:4px}
+.bundle-price span{font-size:14px;color:var(--text3);font-weight:400}
+.bundle-credits{color:var(--accent);font-size:13px;margin-bottom:16px}
+.bundle-details{list-style:none;padding:0;margin-bottom:24px}
+.bundle-details li{color:var(--text2);font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)}
+.bundle-details li:last-child{border:none}
+.buy-btn{width:100%;padding:12px;border:none;border-radius:var(--radius);background:var(--accent);color:#000;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:background .2s}
+.buy-btn:hover{background:var(--accent2)}
+.buy-btn:disabled{opacity:.5;cursor:wait}
+.email-input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:12px}
+.email-input:focus{outline:none;border-color:var(--accent)}
+.info{margin-top:48px;padding:24px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2)}
+.info h3{font-size:14px;margin-bottom:12px}
+.info p{color:var(--text2);font-size:12px;line-height:1.7}
+.success-msg{text-align:center;padding:80px 24px;font-size:18px;color:var(--accent)}
+.success-msg p{color:var(--text2);margin-top:12px;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+<div class="container header-inner">
+<a class="logo" href="/">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 228 56" fill="none">
+<defs><linearGradient id="dg" x1="22" y1="3" x2="22" y2="51" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+<path d="M22 3C11 14 5 22 5 34A17 17 0 0 0 39 34C39 22 33 14 22 3Z" fill="url(#dg)"/>
+<ellipse cx="15" cy="31" rx="3.5" ry="5.5" fill="white" fill-opacity="0.28" transform="rotate(-18 15 31)"/>
+<text x="52" y="39" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif" font-size="26" font-weight="800" letter-spacing="-0.5"><tspan fill="#6366f1">dev</tspan><tspan fill="#1e293b">drops</tspan></text>
+</svg>
+</a>
+<div class="header-links">
+<a href="/catalog">Catalog</a>
+<a href="/">Home</a>
+</div>
+</div>
+</header>
+
+<section class="container" style="padding-top:60px">
+
+<div id="success" style="display:none" class="success-msg">
+<div style="font-size:48px;margin-bottom:16px">&#10003;</div>
+<div>Payment successful!</div>
+<p>Your credits have been added. Check your balance with the email you used at checkout.</p>
+<p style="margin-top:20px"><code>curl "https://api.devdrops.run/api/credits/balance?wallet=stripe:YOUR_EMAIL"</code></p>
+</div>
+
+<div id="checkout-form">
+<h1>Buy API Credits</h1>
+<p class="subtitle">Pay with credit card. No crypto wallet needed. Credits work across all 43 endpoints.</p>
+
+<div class="bundles">
+<div class="bundle">
+<div class="bundle-name">Starter</div>
+<div class="bundle-price">$5 <span>one-time</span></div>
+<div class="bundle-credits">$5.00 credit</div>
+<ul class="bundle-details">
+<li>~500 API queries</li>
+<li>$0.01 avg per query</li>
+<li>No expiry</li>
+</ul>
+<input class="email-input" type="email" placeholder="Email (for receipt)" data-bundle="starter">
+<button class="buy-btn" onclick="buy('starter',this)">Buy Starter</button>
+</div>
+
+<div class="bundle popular">
+<div class="popular-tag">Most Popular</div>
+<div class="bundle-name">Pro</div>
+<div class="bundle-price">$25 <span>one-time</span></div>
+<div class="bundle-credits">$27.50 credit &mdash; 10% bonus</div>
+<ul class="bundle-details">
+<li>~2,750 API queries</li>
+<li>$0.009 avg per query</li>
+<li>No expiry</li>
+</ul>
+<input class="email-input" type="email" placeholder="Email (for receipt)" data-bundle="pro">
+<button class="buy-btn" onclick="buy('pro',this)">Buy Pro</button>
+</div>
+
+<div class="bundle">
+<div class="bundle-name">Business</div>
+<div class="bundle-price">$100 <span>one-time</span></div>
+<div class="bundle-credits">$120.00 credit &mdash; 20% bonus</div>
+<ul class="bundle-details">
+<li>~12,000 API queries</li>
+<li>$0.008 avg per query</li>
+<li>No expiry</li>
+</ul>
+<input class="email-input" type="email" placeholder="Email (for receipt)" data-bundle="business">
+<button class="buy-btn" onclick="buy('business',this)">Buy Business</button>
+</div>
+</div>
+
+<div class="info">
+<h3>How it works</h3>
+<p>1. Pick a bundle and pay with your credit card via Stripe.<br>
+2. Credits are tied to your email address.<br>
+3. Use credits by passing <code>X-DevDrops-Email: your@email.com</code> header with API requests.<br>
+4. Each API call deducts from your balance based on endpoint pricing ($0.001 &ndash; $0.10).<br>
+5. Check your balance anytime: <code>GET /api/credits/balance?wallet=stripe:your@email.com</code></p>
+</div>
+
+<div class="info" style="margin-top:16px">
+<h3>Prefer crypto?</h3>
+<p>DevDrops also supports direct x402 micropayments in USDC on Base mainnet. No account needed &mdash; pay per request with any x402-compatible wallet. <a href="/">Learn more</a></p>
+</div>
+</div>
+
+</section>
+
+<script>
+if(new URLSearchParams(location.search).get('success')==='true'){
+  document.getElementById('success').style.display='block';
+  document.getElementById('checkout-form').style.display='none';
+}
+async function buy(bundle,btn){
+  const email=btn.parentElement.querySelector('input[data-bundle="'+bundle+'"]').value;
+  btn.disabled=true;btn.textContent='Redirecting...';
+  try{
+    const res=await fetch('/api/checkout/session',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({bundle,email:email||undefined})
+    });
+    const data=await res.json();
+    if(data.url)window.location.href=data.url;
+    else{btn.disabled=false;btn.textContent='Error — try again';alert(data.error||'Something went wrong');}
+  }catch(e){btn.disabled=false;btn.textContent='Error — try again';}
+}
+</script>
+
+</body>
+</html>
+`;
