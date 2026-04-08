@@ -95,6 +95,62 @@ app.route("/.well-known", wellKnown);
 // llms.txt at root for AI assistant discovery
 app.get("/llms.txt", (c) => c.redirect("/.well-known/llms.txt", 301));
 
+// SEO: sitemap.xml
+app.get("/sitemap.xml", (c) => {
+  const urls = [
+    { loc: "https://devdrops.run/", priority: "1.0", changefreq: "weekly" },
+    { loc: "https://devdrops.run/buy", priority: "0.9", changefreq: "monthly" },
+    { loc: "https://api.devdrops.run/catalog", priority: "0.8", changefreq: "weekly" },
+    { loc: "https://api.devdrops.run/openapi.json", priority: "0.7", changefreq: "weekly" },
+    { loc: "https://api.devdrops.run/llms.txt", priority: "0.7", changefreq: "weekly" },
+    { loc: "https://api.devdrops.run/.well-known/ai-plugin.json", priority: "0.6", changefreq: "monthly" },
+    { loc: "https://api.devdrops.run/.well-known/mcp.json", priority: "0.6", changefreq: "monthly" },
+    { loc: "https://api.devdrops.run/.well-known/mcp/server-card.json", priority: "0.6", changefreq: "monthly" },
+  ];
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(u => `  <url><loc>${u.loc}</loc><changefreq>${u.changefreq}</changefreq><priority>${u.priority}</priority></url>`).join("\n")}
+</urlset>`;
+  return c.text(xml, 200, { "Content-Type": "application/xml" });
+});
+
+// IndexNow verification key
+app.get("/d7f3a2b1e9c8456789abcdef01234567.txt", (c) => c.text("d7f3a2b1e9c8456789abcdef01234567"));
+
+// SEO: robots.txt
+app.get("/robots.txt", (c) => {
+  return c.text(`User-agent: *
+Allow: /
+Allow: /buy
+Allow: /catalog
+Allow: /openapi.json
+Allow: /llms.txt
+Allow: /.well-known/
+Disallow: /api/
+
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+Allow: /.well-known/
+Allow: /catalog
+Allow: /openapi.json
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+Sitemap: https://devdrops.run/sitemap.xml
+`);
+});
+
 // Admin route — outside /api/* so payment middleware never runs
 app.get("/admin/sanctions/refresh", async (c) => {
   const { refreshSanctionsList } = await import("./routes/sanctions");
