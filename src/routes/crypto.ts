@@ -32,26 +32,49 @@ crypto.get("/top", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
+  // Try CoinCap first, fall back to CoinGecko
   try {
     const res = await fetchUpstream(`https://api.coincap.io/v2/assets?limit=${limit}`);
     const raw: any = await res.json();
+    if (raw.data?.length) {
+      const data = raw.data.map((a: any) => ({
+        rank: parseInt(a.rank),
+        symbol: a.symbol,
+        name: a.name,
+        price_usd: parseFloat(a.priceUsd),
+        change_24h_pct: parseFloat(a.changePercent24Hr),
+        market_cap_usd: parseFloat(a.marketCapUsd),
+        volume_24h_usd: parseFloat(a.volumeUsd24Hr),
+        supply: parseFloat(a.supply),
+        max_supply: a.maxSupply ? parseFloat(a.maxSupply) : null,
+        source: "CoinCap",
+      }));
+      await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+      return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    }
+  } catch { /* fall through to CoinGecko */ }
 
-    const data = raw.data?.map((a: any) => ({
-      rank: parseInt(a.rank),
-      symbol: a.symbol,
+  try {
+    const res = await fetchUpstream(
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${limit}&page=1&sparkline=false`
+    );
+    const raw: any = await res.json();
+    const data = raw.map((a: any, i: number) => ({
+      rank: i + 1,
+      symbol: a.symbol?.toUpperCase(),
       name: a.name,
-      price_usd: parseFloat(a.priceUsd),
-      change_24h_pct: parseFloat(a.changePercent24Hr),
-      market_cap_usd: parseFloat(a.marketCapUsd),
-      volume_24h_usd: parseFloat(a.volumeUsd24Hr),
-      supply: parseFloat(a.supply),
-      max_supply: a.maxSupply ? parseFloat(a.maxSupply) : null,
+      price_usd: a.current_price,
+      change_24h_pct: a.price_change_percentage_24h,
+      market_cap_usd: a.market_cap,
+      volume_24h_usd: a.total_volume,
+      supply: a.circulating_supply,
+      max_supply: a.max_supply ?? null,
+      source: "CoinGecko",
     }));
-
     await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
     return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
   } catch {
-    return c.json({ error: "CoinCap service unavailable" }, 503);
+    return c.json({ error: "Crypto data unavailable" }, 503);
   }
 });
 
@@ -145,25 +168,58 @@ crypto.get("/", (c) => c.json({
 }, 400));
 
 async function fetchCoinCapPrice(symbol: string) {
+  // Try CoinCap first
   try {
-    // CoinCap uses lowercase IDs — search by symbol first
     const searchRes = await fetchUpstream(`https://api.coincap.io/v2/assets?search=${symbol}&limit=5`);
     const searchRaw: any = await searchRes.json();
-
     const asset = searchRaw.data?.find((a: any) => a.symbol.toUpperCase() === symbol);
-    if (!asset) return null;
+    if (asset) {
+      return {
+        symbol: asset.symbol,
+        name: asset.name,
+        rank: parseInt(asset.rank),
+        price_usd: parseFloat(asset.priceUsd),
+        change_24h_pct: parseFloat(asset.changePercent24Hr),
+        market_cap_usd: parseFloat(asset.marketCapUsd),
+        volume_24h_usd: parseFloat(asset.volumeUsd24Hr),
+        supply: parseFloat(asset.supply),
+        max_supply: asset.maxSupply ? parseFloat(asset.maxSupply) : null,
+        source: "CoinCap",
+      };
+    }
+  } catch { /* fall through */ }
 
+  // Fall back to CoinGecko
+  try {
+    const id = symbol.toLowerCase();
+    const res = await fetchUpstream(
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${id}&order=market_cap_desc&per_page=1&page=1`
+    );
+    const raw: any = await res.json();
+    // CoinGecko uses name-based IDs (e.g. "bitcoin" not "BTC") — try by symbol if ID lookup fails
+    let asset = raw?.[0];
+    if (!asset) {
+      const listRes = await fetchUpstream(`https://api.coingecko.com/api/v3/coins/list`);
+      const list: any[] = await listRes.json();
+      const match = list.find((c: any) => c.symbol.toUpperCase() === symbol);
+      if (match) {
+        const r2 = await fetchUpstream(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${match.id}&per_page=1&page=1`);
+        const raw2: any = await r2.json();
+        asset = raw2?.[0];
+      }
+    }
+    if (!asset) return null;
     return {
-      symbol: asset.symbol,
+      symbol: asset.symbol?.toUpperCase(),
       name: asset.name,
-      rank: parseInt(asset.rank),
-      price_usd: parseFloat(asset.priceUsd),
-      change_24h_pct: parseFloat(asset.changePercent24Hr),
-      market_cap_usd: parseFloat(asset.marketCapUsd),
-      volume_24h_usd: parseFloat(asset.volumeUsd24Hr),
-      supply: parseFloat(asset.supply),
-      max_supply: asset.maxSupply ? parseFloat(asset.maxSupply) : null,
-      source: "CoinCap",
+      rank: asset.market_cap_rank ?? null,
+      price_usd: asset.current_price,
+      change_24h_pct: asset.price_change_percentage_24h,
+      market_cap_usd: asset.market_cap,
+      volume_24h_usd: asset.total_volume,
+      supply: asset.circulating_supply,
+      max_supply: asset.max_supply ?? null,
+      source: "CoinGecko",
     };
   } catch {
     return null;
