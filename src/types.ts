@@ -15,6 +15,9 @@ export interface Env {
   CDP_API_KEY_ID: string;
   CDP_API_KEY_SECRET: string;  // PEM-encoded EC private key
 
+  // Email (Cloudflare Email Routing)
+  EMAIL: SendEmail;
+
   // Stripe (set via `wrangler secret put`)
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;

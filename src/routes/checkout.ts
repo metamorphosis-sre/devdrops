@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import Stripe from "stripe";
+import { EmailMessage } from "cloudflare:email";
+import { createMimeMessage } from "mimetext";
 import type { Env } from "../types";
 import { BUNDLES, type BundleName, addCredits } from "../lib/credits";
 
@@ -89,6 +91,36 @@ checkout.post("/webhook", async (c) => {
 
     if (!existing) {
       await addCredits(c.env.DB, walletId, bundle);
+
+      // Send purchase notification email
+      try {
+        const b = BUNDLES[bundle];
+        const msg = createMimeMessage();
+        msg.setSender({ name: "DevDrops", addr: "notifications@devdrops.run" });
+        msg.setRecipient("pchawla@gmail.com");
+        msg.setSubject(`New purchase: ${b.label} bundle ($${b.price})`);
+        msg.addMessage({
+          contentType: "text/plain",
+          data: [
+            `New DevDrops purchase!`,
+            ``,
+            `Bundle: ${b.label} ($${b.price})`,
+            `Credits: $${b.credits.toFixed(2)} (${b.queries.toLocaleString()} queries)`,
+            `Customer: ${session.customer_email || "anonymous"}`,
+            `Wallet ID: ${walletId}`,
+            `Stripe Session: ${session.id}`,
+            `Time: ${new Date().toISOString()}`,
+            ``,
+            `---`,
+            `https://dashboard.stripe.com/payments/${session.payment_intent}`,
+          ].join("\n"),
+        });
+        const email = new EmailMessage("notifications@devdrops.run", "pchawla@gmail.com", msg.asRaw());
+        await c.env.EMAIL.send(email);
+      } catch (e) {
+        // Don't fail the webhook if email fails
+        console.error("Email notification failed:", e);
+      }
     }
   }
 
