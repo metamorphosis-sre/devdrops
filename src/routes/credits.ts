@@ -53,8 +53,8 @@ credits.post("/purchase/:bundle", async (c) => {
 // GET /api/credits/balance?wallet=0x... — check credit balance
 credits.get("/balance", async (c) => {
   const wallet = c.req.query("wallet");
-  if (!wallet || !wallet.startsWith("0x")) {
-    return c.json({ error: "Missing 'wallet' query param (0x...)" }, 400);
+  if (!wallet) {
+    return c.json({ error: "Missing 'wallet' query param (0x... or stripe:email)" }, 400);
   }
 
   try {
