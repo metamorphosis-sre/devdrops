@@ -46,7 +46,7 @@ credits.post("/purchase/:bundle", async (c) => {
       timestamp: new Date().toISOString(),
     });
   } catch (e) {
-    return c.json({ error: "Failed to process credit purchase", detail: String(e) }, 503);
+    return c.json({ error: "Failed to process credit purchase" }, 503);
   }
 });
 
@@ -67,12 +67,21 @@ credits.get("/balance", async (c) => {
       timestamp: new Date().toISOString(),
     });
   } catch (e) {
-    return c.json({ error: "Failed to fetch balance", detail: String(e) }, 503);
+    return c.json({ error: "Failed to fetch balance" }, 503);
   }
 });
 
-// POST /api/credits/use — internal: deduct credits (called by middleware)
+// POST /api/credits/use — internal only: deduct credits (called by middleware)
+// Protected: requires internal secret or cron origin (no CF-Connecting-IP)
 credits.post("/use", async (c) => {
+  const ip = c.req.header("CF-Connecting-IP");
+  const authHeader = c.req.header("Authorization");
+  const isCron = !ip;
+  const hasSecret = authHeader === `Bearer ${c.env.ADMIN_SECRET ?? ""}`;
+  if (!isCron && !hasSecret) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
   let body: any;
   try {
     body = await c.req.json();
@@ -92,11 +101,12 @@ credits.post("/use", async (c) => {
     if (e?.message === "Insufficient credits") {
       return c.json({ error: "Insufficient credits", wallet }, 402);
     }
-    return c.json({ error: "Failed to deduct credits", detail: String(e) }, 503);
+    return c.json({ error: "Failed to deduct credits" }, 503);
   }
 });
 
 credits.get("/", (c) => c.json({
+  error: "Specify a sub-path",
   product: PRODUCT,
   description: "Prepaid credit bundles — buy once, query many. Saves on per-transaction gas fees.",
   bundles: Object.entries(BUNDLES).map(([name, b]) => ({

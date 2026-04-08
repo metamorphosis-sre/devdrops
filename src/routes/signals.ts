@@ -77,7 +77,7 @@ async function correlateWithClaude(market: string, context: any, apiKey: string)
     const raw: any = await res.json();
     return JSON.parse(raw.content?.[0]?.text ?? "{}");
   } catch (e) {
-    return { error: "Correlation analysis failed", detail: String(e) };
+    return { error: "Correlation analysis failed" };
   }
 }
 

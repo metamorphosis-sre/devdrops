@@ -85,7 +85,7 @@ utils.get("/iban", (c) => {
     for (const ch of digits) {
       remainder = (remainder * 10 + parseInt(ch)) % 97;
     }
-    mod97Valid = remainder === 97;
+    mod97Valid = remainder === 1;
   }
 
   const length_valid = expectedLength ? number.length === expectedLength : null;

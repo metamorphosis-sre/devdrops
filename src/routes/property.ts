@@ -59,27 +59,31 @@ property.get("/uk/company/:number", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  // Get company charges (mortgages/charges on property) from Companies House
-  const res = await fetchUpstream(`https://api.company-information.service.gov.uk/company/${number}/charges`, {
-    headers: { Authorization: `Basic ${btoa(c.env.COMPANIES_HOUSE_API_KEY + ":")}` },
-  });
-  const raw: any = await res.json();
+  try {
+    // Get company charges (mortgages/charges on property) from Companies House
+    const res = await fetchUpstream(`https://api.company-information.service.gov.uk/company/${number}/charges`, {
+      headers: { Authorization: `Basic ${btoa(c.env.COMPANIES_HOUSE_API_KEY + ":")}` },
+    });
+    const raw: any = await res.json();
 
-  const data = {
-    company_number: number,
-    total_charges: raw.total_count,
-    charges: raw.items?.slice(0, 20).map((ch: any) => ({
-      status: ch.status,
-      created: ch.created_on,
-      delivered: ch.delivered_on,
-      description: ch.particulars?.description,
-      persons_entitled: ch.persons_entitled?.map((p: any) => p.name),
-      secured_type: ch.classification?.type,
-    })),
-  };
+    const data = {
+      company_number: number,
+      total_charges: raw.total_count,
+      charges: raw.items?.slice(0, 20).map((ch: any) => ({
+        status: ch.status,
+        created: ch.created_on,
+        delivered: ch.delivered_on,
+        description: ch.particulars?.description,
+        persons_entitled: ch.persons_entitled?.map((p: any) => p.name),
+        secured_type: ch.classification?.type,
+      })),
+    };
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "Companies House charges service unavailable" }, 503);
+  }
 });
 
 // GET /api/property/uk/index — UK House Price Index

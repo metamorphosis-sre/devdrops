@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
+import { secureHeaders } from "hono/secure-headers";
 import { paymentMiddlewareFromConfig } from "@x402/hono";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
@@ -80,6 +82,16 @@ const app = new Hono<{ Bindings: Env }>();
 
 // Global middleware
 app.use("*", corsMiddleware);
+app.use("*", secureHeaders({
+  contentSecurityPolicy: false, // API returns JSON mostly; HTML pages are simple static
+  xFrameOptions: "DENY",
+  xContentTypeOptions: "nosniff",
+  strictTransportSecurity: "max-age=31536000; includeSubDomains",
+  permissionsPolicy: { camera: [], microphone: [], geolocation: [] },
+  referrerPolicy: "strict-origin-when-cross-origin",
+}));
+// Body size limit — 256KB for all POST requests
+app.use("/api/*", bodyLimit({ maxSize: 256 * 1024 }));
 
 // Landing page at root
 app.get("/", (c) => c.html(LANDING_HTML));
@@ -152,7 +164,15 @@ Sitemap: https://devdrops.run/sitemap.xml
 });
 
 // Admin route — outside /api/* so payment middleware never runs
+// Protected: only requests from Cloudflare cron (no CF-Connecting-IP) or matching secret can trigger
 app.get("/admin/sanctions/refresh", async (c) => {
+  const ip = c.req.header("CF-Connecting-IP");
+  const authHeader = c.req.header("Authorization");
+  const isCron = !ip; // Cron triggers have no connecting IP
+  const hasSecret = c.env.ADMIN_SECRET && authHeader === `Bearer ${c.env.ADMIN_SECRET}`;
+  if (!isCron && !hasSecret) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
   const { refreshSanctionsList } = await import("./routes/sanctions");
   const count = await refreshSanctionsList(c.env.CACHE);
   return c.json({ refreshed: true, entries_loaded: count, timestamp: new Date().toISOString() });
@@ -177,10 +197,7 @@ app.use("/api/*", async (c, next) => {
 
   // Free tier — 5 queries/day/IP on eligible endpoints, inline to avoid Hono context-variable issues
   if (c.req.method === "GET" && FREE_TIER_PREFIXES.some((p) => c.req.path.startsWith(p))) {
-    const ip =
-      c.req.header("CF-Connecting-IP") ??
-      c.req.header("X-Forwarded-For")?.split(",")[0]?.trim() ??
-      "unknown";
+    const ip = c.req.header("CF-Connecting-IP") ?? "unknown";
     if (ip !== "unknown") {
       const kvKey = `freetier:${ip}:${new Date().toISOString().split("T")[0]}`;
       try {
@@ -189,7 +206,7 @@ app.use("/api/*", async (c, next) => {
         if (used < FREE_QUERIES_PER_DAY) {
           const newCount = used + 1;
           // fire-and-forget — don't add latency
-          c.env.CACHE.put(kvKey, String(newCount), { expirationTtl: FREE_TIER_KV_TTL });
+          c.env.CACHE.put(kvKey, String(newCount), { expirationTtl: FREE_TIER_KV_TTL }).catch(() => {});
           c.header("X-Free-Tier-Remaining", String(FREE_QUERIES_PER_DAY - newCount));
           c.header("X-Free-Tier-Limit", String(FREE_QUERIES_PER_DAY));
           c.header("X-Free-Tier-Reset", "daily at midnight UTC");
@@ -297,7 +314,7 @@ app.all("/api/*", (c) => {
 app.onError((err, c) => {
   if (err instanceof UpstreamError) {
     return c.json(
-      { error: "Upstream service error", upstream_status: err.status, detail: err.message },
+      { error: "Upstream service error", upstream_status: err.status },
       502
     );
   }
@@ -773,6 +790,10 @@ curl https://api.devdrops.run/api/fx/latest<br><br>
 <a href="/openapi.json" style="color:var(--text3)">OpenAPI</a>
 &nbsp;·&nbsp;
 <a href="/catalog" style="color:var(--text3)">Catalog</a>
+&nbsp;·&nbsp;
+<a href="/buy" style="color:var(--text3)">Buy credits</a>
+&nbsp;·&nbsp;
+<a href="mailto:support@devdrops.run" style="color:var(--text3)">support@devdrops.run</a>
 &nbsp;·&nbsp;
 x402 · Base · Cloudflare
 </span>

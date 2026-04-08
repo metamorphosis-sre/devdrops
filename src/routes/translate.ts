@@ -15,7 +15,12 @@ const translate = new Hono<{ Bindings: Env }>();
 // POST /api/translate/text — translate text
 // Body: { q: string, source?: string (default "auto"), target: string (BCP-47 code e.g. "es", "fr", "zh") }
 translate.post("/text", async (c) => {
-  const body = await c.req.json<{ q: string; source?: string; target: string }>();
+  let body: { q: string; source?: string; target: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Request body must be valid JSON" }, 400);
+  }
   const { q, source, target } = body;
 
   if (!q || !target) return c.json({ error: "Missing 'q' (text) and 'target' (language code, e.g. 'es')" }, 400);
@@ -30,8 +35,14 @@ translate.post("/text", async (c) => {
   const langpair = srcLang === "auto" ? `autodetect|${target}` : `${srcLang}|${target}`;
   const url = `${MYMEMORY_URL}/get?q=${encodeURIComponent(q)}&langpair=${encodeURIComponent(langpair)}`;
 
-  const res = await fetchUpstream(url);
-  const raw: any = await res.json();
+  let res: Response;
+  let raw: any;
+  try {
+    res = await fetchUpstream(url);
+    raw = await res.json();
+  } catch {
+    return c.json({ error: "Translation service unavailable" }, 503);
+  }
 
   if (raw.responseStatus !== 200) {
     return c.json({ error: "Translation failed", detail: raw.responseDetails ?? raw.responseStatus }, 502);

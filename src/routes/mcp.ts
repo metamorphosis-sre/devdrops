@@ -325,7 +325,7 @@ mcp.post("/", async (c) => {
         content: [{ type: "text", text: JSON.stringify(data) }],
       }));
     } catch (e: any) {
-      return c.json(rpcError(id, -32000, `Tool call failed: ${e?.message ?? String(e)}`));
+      return c.json(rpcError(id, -32000, "Tool call failed"));
     }
   }
 

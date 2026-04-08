@@ -29,6 +29,7 @@ export interface Env {
   ANTHROPIC_API_KEY: string;        // Claude API for AI products
   SAM_GOV_API_KEY: string;          // SAM.gov (US government tenders)
   FDC_API_KEY: string;              // USDA FoodData Central
+  ADMIN_SECRET: string;             // Admin endpoint auth (set via `wrangler secret put`)
 }
 
 export interface ProductConfig {

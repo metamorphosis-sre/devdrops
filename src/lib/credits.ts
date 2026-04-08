@@ -49,24 +49,25 @@ export async function hasCredits(db: D1Database, wallet: string, amount: number)
 export async function deductCredits(db: D1Database, wallet: string, amount: number, endpoint: string) {
   const w = wallet.toLowerCase();
 
+  // Atomic deduct: UPDATE only succeeds if balance >= amount, preventing double-spend
+  const result = await db.prepare(
+    `UPDATE credit_balances SET balance = balance - ?, total_used = total_used + ?, updated_at = datetime('now') WHERE wallet = ? AND balance >= ?`
+  ).bind(amount, amount, w, amount).run();
+
+  if (!result.meta.changes || result.meta.changes === 0) {
+    throw new Error("Insufficient credits");
+  }
+
+  // Log the transaction (non-critical — if this fails, the deduction already happened)
+  await db.prepare(
+    "INSERT INTO credit_transactions (wallet, type, amount, endpoint) VALUES (?, 'usage', ?, ?)"
+  ).bind(w, amount, endpoint).run().catch(() => {});
+
   const row = await db.prepare(
     "SELECT balance FROM credit_balances WHERE wallet = ?"
   ).bind(w).first<{ balance: number }>();
 
-  if (!row || row.balance < amount) {
-    throw new Error("Insufficient credits");
-  }
-
-  await db.batch([
-    db.prepare(
-      `UPDATE credit_balances SET balance = balance - ?, total_used = total_used + ?, updated_at = datetime('now') WHERE wallet = ?`
-    ).bind(amount, amount, w),
-    db.prepare(
-      "INSERT INTO credit_transactions (wallet, type, amount, endpoint) VALUES (?, 'usage', ?, ?)"
-    ).bind(w, amount, endpoint),
-  ]);
-
-  return { remaining: row.balance - amount };
+  return { remaining: row?.balance ?? 0 };
 }
 
 export async function getTransactions(db: D1Database, wallet: string, limit = 20) {

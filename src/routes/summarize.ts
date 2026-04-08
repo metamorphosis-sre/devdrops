@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from "../types";
 import { getCached, setCache } from "../lib/cache";
+import { validateFetchUrl } from "../lib/url-guard";
 
 const PRODUCT = "summarize";
 const CACHE_TTL = 3600; // 1 hour
@@ -14,15 +15,9 @@ summarize.get("/url", async (c) => {
   const targetUrl = c.req.query("url");
   if (!targetUrl) return c.json({ error: "Missing 'url' query param" }, 400);
 
-  let parsed: URL;
-  try {
-    parsed = new URL(targetUrl);
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-      return c.json({ error: "Only http and https URLs are supported" }, 400);
-    }
-  } catch {
-    return c.json({ error: "Invalid URL" }, 400);
-  }
+  const urlError = validateFetchUrl(targetUrl);
+  if (urlError) return c.json({ error: urlError }, 400);
+  const parsed = new URL(targetUrl);
 
   const length = (c.req.query("length") ?? "medium").toLowerCase();
   if (!["short", "medium", "long"].includes(length)) {
@@ -87,7 +82,7 @@ summarize.get("/url", async (c) => {
     return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
   } catch (e: any) {
     if (e?.name === "TimeoutError") return c.json({ error: "Target URL timed out" }, 504);
-    return c.json({ error: "Failed to summarize URL", detail: String(e) }, 503);
+    return c.json({ error: "Failed to summarize URL" }, 503);
   }
 });
 
@@ -111,7 +106,7 @@ async function callClaude(prompt: string, apiKey: string) {
     const text = raw.content?.[0]?.text ?? "{}";
     return JSON.parse(text);
   } catch (e) {
-    return { error: "AI summarization failed", detail: String(e) };
+    return { error: "AI summarization failed" };
   }
 }
 

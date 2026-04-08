@@ -40,7 +40,12 @@ documents.post("/summarize", async (c) => {
 documents.post("/extract", async (c) => {
   if (!c.env.ANTHROPIC_API_KEY) return c.json(missingKeyResponse("ANTHROPIC_API_KEY"), 503);
 
-  const body = await c.req.json<{ text: string }>();
+  let body: { text: string };
+  try {
+    body = await c.req.json<{ text: string }>();
+  } catch {
+    return c.json({ error: "Request body must be valid JSON" }, 400);
+  }
   if (!body.text) return c.json({ error: "Missing 'text' in request body" }, 400);
   if (body.text.length < 50) return c.json({ error: "Text too short (minimum 50 characters)" }, 400);
   if (body.text.length > 100000) return c.json({ error: "Text too long (maximum 100,000 characters)" }, 400);
@@ -76,7 +81,7 @@ async function summarizeWithClaude(text: string, apiKey: string) {
     const raw: any = await res.json();
     return JSON.parse(raw.content?.[0]?.text ?? "{}");
   } catch (e) {
-    return { error: "Summarization failed", detail: String(e) };
+    return { error: "Summarization failed" };
   }
 }
 
@@ -99,7 +104,7 @@ async function extractWithClaude(text: string, apiKey: string) {
     const raw: any = await res.json();
     return JSON.parse(raw.content?.[0]?.text ?? "{}");
   } catch (e) {
-    return { error: "Extraction failed", detail: String(e) };
+    return { error: "Extraction failed" };
   }
 }
 

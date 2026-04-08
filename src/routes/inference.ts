@@ -71,7 +71,7 @@ inference.post("/complete", async (c) => {
       timestamp: new Date().toISOString(),
     });
   } catch (e: any) {
-    return c.json({ error: `Inference failed: ${e?.message ?? "unknown error"}` }, 503);
+    return c.json({ error: "Inference failed" }, 503);
   }
 });
 
@@ -118,7 +118,7 @@ inference.post("/chat", async (c) => {
       timestamp: new Date().toISOString(),
     });
   } catch (e: any) {
-    return c.json({ error: `Inference failed: ${e?.message ?? "unknown error"}` }, 503);
+    return c.json({ error: "Inference failed" }, 503);
   }
 });
 

@@ -21,11 +21,15 @@ fx.get("/latest", async (c) => {
   let url = `${BASE_URL}/latest?base=${base}`;
   if (symbols) url += `&symbols=${symbols}`;
 
-  const res = await fetchUpstream(url);
-  const data = await res.json();
+  try {
+    const res = await fetchUpstream(url);
+    const data = await res.json();
 
-  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "FX rates service unavailable" }, 503);
+  }
 });
 
 // GET /api/fx/convert?from=USD&to=GBP&amount=100

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from "../types";
 import { getTiered, setTiered } from "../lib/cache";
+import { validateFetchUrl } from "../lib/url-guard";
 
 const PRODUCT = "extract";
 const CACHE_TTL = 3600; // 1 hour
@@ -12,16 +13,10 @@ extract.get("/url", async (c) => {
   const targetUrl = c.req.query("url");
   if (!targetUrl) return c.json({ error: "Missing 'url' query param" }, 400);
 
-  // Validate URL
-  let parsed: URL;
-  try {
-    parsed = new URL(targetUrl);
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-      return c.json({ error: "Only http and https URLs are supported" }, 400);
-    }
-  } catch {
-    return c.json({ error: "Invalid URL" }, 400);
-  }
+  // Validate URL (including SSRF protection)
+  const urlError = validateFetchUrl(targetUrl);
+  if (urlError) return c.json({ error: urlError }, 400);
+  const parsed = new URL(targetUrl);
 
   const cacheKey = `url:${targetUrl}`;
   const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
@@ -58,17 +53,27 @@ extract.get("/url", async (c) => {
     return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
   } catch (e: any) {
     if (e?.name === "TimeoutError") return c.json({ error: "Target URL timed out" }, 504);
-    return c.json({ error: "Failed to fetch URL", detail: String(e) }, 502);
+    return c.json({ error: "Failed to fetch URL" }, 502);
   }
 });
 
 // POST /api/extract/html — extract from raw HTML submitted in body
 extract.post("/html", async (c) => {
-  const body = await c.req.json<{ html: string; url?: string }>();
+  let body: { html: string; url?: string };
+  try {
+    body = await c.req.json<{ html: string; url?: string }>();
+  } catch {
+    return c.json({ error: "Request body must be valid JSON" }, 400);
+  }
   if (!body.html) return c.json({ error: "Missing 'html' in request body" }, 400);
   if (body.html.length > 500000) return c.json({ error: "HTML too large (max 500KB)" }, 400);
 
-  const origin = body.url ? new URL(body.url).origin : "";
+  let origin = "";
+  try {
+    origin = body.url ? new URL(body.url).origin : "";
+  } catch {
+    // invalid URL, proceed without origin
+  }
   const extracted = extractFromHTML(body.html, origin);
 
   return c.json({

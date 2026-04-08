@@ -95,7 +95,7 @@ async function checkEUVAT(countryCode: string, vatNumber: string): Promise<Recor
       source: "EU VIES",
     };
   } catch (e) {
-    return { valid: false, error: "EU VIES service unavailable", detail: String(e), status: 503 };
+    return { valid: false, error: "EU VIES service unavailable", status: 503 };
   }
 }
 
@@ -130,7 +130,7 @@ async function checkUKVAT(vatNumber: string): Promise<Record<string, unknown>> {
       source: "UK HMRC",
     };
   } catch (e) {
-    return { valid: false, error: "UK HMRC service unavailable", detail: String(e), status: 503 };
+    return { valid: false, error: "UK HMRC service unavailable", status: 503 };
   }
 }
 

@@ -1,0 +1,45 @@
+{
+  // This file exists to take precedence over any wrangler.jsonc in parent directories.
+  // All actual config is in wrangler.toml — do not duplicate it here.
+  // Wrangler prefers .jsonc over .toml when both exist, so this file ensures
+  // the devdrops project is isolated from ~/wrangler.jsonc (the 'pchawla' static assets worker).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "devdrops-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    { "pattern": "api.devdrops.run", "custom_domain": true },
+    { "pattern": "devdrops.run/*", "zone_name": "devdrops.run" },
+    { "pattern": "www.devdrops.run/*", "zone_name": "devdrops.run" }
+  ],
+  "workers_dev": true,
+  "d1_databases": [
+    { "binding": "DB", "database_name": "devdrops", "database_id": "dc92b44a-7d5e-46f1-b7cc-865328f8d42e" }
+  ],
+  "ai": { "binding": "AI" },
+  "kv_namespaces": [
+    { "binding": "CACHE", "id": "7973d723cbf349c2874eece54b651d49" }
+  ],
+  "send_email": [
+    { "name": "EMAIL", "destination_address": "pchawla@gmail.com" }
+  ],
+  "triggers": {
+    "crons": ["*/30 * * * *", "0 2 * * *"]
+  },
+  "vars": {
+    "FACILITATOR_URL": "https://api.cdp.coinbase.com/platform/v2/x402",
+    "NETWORK": "eip155:8453",
+    "ENVIRONMENT": "production",
+    "PAY_TO_ADDRESS": "0xc42EAe553c5C2d521d8A0543c265480B380179D2"
+  },
+  "env": {
+    "production": {
+      "vars": {
+        "ENVIRONMENT": "production",
+        "NETWORK": "eip155:8453",
+        "FACILITATOR_URL": "https://api.cdp.coinbase.com/platform/v2/x402"
+      }
+    }
+  }
+}

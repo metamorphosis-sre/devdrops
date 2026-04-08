@@ -99,16 +99,20 @@ async function fetchDNS(domainName: string) {
 }
 
 async function fetchDNSType(domainName: string, type: string) {
-  const res = await fetchUpstream(
-    `https://dns.google/resolve?name=${domainName}&type=${type}`,
-    { headers: { Accept: "application/dns-json" } }
-  );
-  const raw: any = await res.json();
-  return {
-    domain: domainName,
-    type,
-    records: raw.Answer?.map((a: any) => ({ name: a.name, type: a.type, ttl: a.TTL, data: a.data })) ?? [],
-  };
+  try {
+    const res = await fetchUpstream(
+      `https://dns.google/resolve?name=${domainName}&type=${type}`,
+      { headers: { Accept: "application/dns-json" } }
+    );
+    const raw: any = await res.json();
+    return {
+      domain: domainName,
+      type,
+      records: raw.Answer?.map((a: any) => ({ name: a.name, type: a.type, ttl: a.TTL, data: a.data })) ?? [],
+    };
+  } catch {
+    return { domain: domainName, type, records: [] };
+  }
 }
 
 async function fetchSSL(domainName: string) {

@@ -53,7 +53,12 @@ research.get("/brief", async (c) => {
 research.post("/brief", async (c) => {
   if (!c.env.ANTHROPIC_API_KEY) return c.json(missingKeyResponse("ANTHROPIC_API_KEY"), 503);
 
-  const body = await c.req.json<{ topic: string; focus?: string; depth?: "quick" | "standard" | "deep" }>();
+  let body: { topic: string; focus?: string; depth?: "quick" | "standard" | "deep" };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Request body must be valid JSON" }, 400);
+  }
   if (!body.topic) return c.json({ error: "Missing 'topic'" }, 400);
 
   const [news, papers, wikipedia] = await Promise.allSettled([
@@ -142,7 +147,7 @@ async function synthesizeBrief(topic: string, context: any, apiKey: string, focu
     const raw: any = await res.json();
     return JSON.parse(raw.content?.[0]?.text ?? "{}");
   } catch (e) {
-    return { error: "Research synthesis failed", detail: String(e) };
+    return { error: "Research synthesis failed" };
   }
 }
 

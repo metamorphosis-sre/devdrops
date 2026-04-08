@@ -54,7 +54,7 @@ checkout.post("/session", async (c) => {
 
     return c.json({ url: session.url, session_id: session.id });
   } catch (e: any) {
-    return c.json({ error: "Stripe error", detail: e?.message || String(e) }, 500);
+    return c.json({ error: "Stripe error" }, 500);
   }
 });
 

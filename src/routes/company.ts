@@ -52,16 +52,20 @@ company.get("/search", async (c) => {
   const cached = await getTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  let data: unknown;
-  if (country === "uk") {
-    if (!c.env.COMPANIES_HOUSE_API_KEY) return c.json(missingKeyResponse("COMPANIES_HOUSE_API_KEY"), 503);
-    data = await searchCH(q, c.env.COMPANIES_HOUSE_API_KEY);
-  } else {
-    data = await searchOpenCorporates(q, country);
-  }
+  try {
+    let data: unknown;
+    if (country === "uk") {
+      if (!c.env.COMPANIES_HOUSE_API_KEY) return c.json(missingKeyResponse("COMPANIES_HOUSE_API_KEY"), 503);
+      data = await searchCH(q, c.env.COMPANIES_HOUSE_API_KEY);
+    } else {
+      data = await searchOpenCorporates(q, country);
+    }
 
-  await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setTiered(c.env.CACHE, c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "Company search service unavailable" }, 503);
+  }
 });
 
 // GET /api/company/domain?domain=apple.com — enrich company from website domain

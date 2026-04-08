@@ -111,7 +111,7 @@ propertyMcp.post("/", async (c) => {
       } catch (e: any) {
         return c.json(
           rpcResult(id, {
-            content: [{ type: "text", text: `Error: ${e?.message ?? "unknown error"}` }],
+            content: [{ type: "text", text: "Tool call failed" }],
             isError: true,
           })
         );

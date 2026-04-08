@@ -44,7 +44,12 @@ sentiment.get("/analyze", async (c) => {
 sentiment.post("/analyze", async (c) => {
   if (!c.env.ANTHROPIC_API_KEY) return c.json(missingKeyResponse("ANTHROPIC_API_KEY"), 503);
 
-  const body = await c.req.json<{ text: string; topic?: string }>();
+  let body: { text: string; topic?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Request body must be valid JSON" }, 400);
+  }
   if (!body.text) return c.json({ error: "Missing 'text' in request body" }, 400);
 
   const analysis = await analyzeTextWithClaude(body.text, body.topic ?? "general", c.env.ANTHROPIC_API_KEY);
@@ -112,7 +117,7 @@ async function callClaude(prompt: string, apiKey: string) {
     const text = raw.content?.[0]?.text ?? "{}";
     return JSON.parse(text);
   } catch (e) {
-    return { error: "AI analysis failed", detail: String(e) };
+    return { error: "AI analysis failed" };
   }
 }
 

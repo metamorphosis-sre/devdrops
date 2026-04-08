@@ -100,7 +100,7 @@ image.post("/generate", async (c) => {
 
     return c.json({ error: "Image generation returned unexpected format" }, 502);
   } catch (e: any) {
-    return c.json({ error: `Image generation failed: ${e?.message ?? "unknown error"}` }, 503);
+    return c.json({ error: "Image generation failed" }, 503);
   }
 });
 

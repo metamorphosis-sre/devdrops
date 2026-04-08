@@ -109,7 +109,8 @@ food.get("/usda/search", async (c) => {
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
   try {
-    const fdcKey = c.env.FDC_API_KEY || "DEMO_KEY";
+    if (!c.env.FDC_API_KEY) return c.json({ error: "FDC API key not configured" }, 503);
+    const fdcKey = c.env.FDC_API_KEY;
     const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(q)}&pageSize=10&api_key=${fdcKey}`;
     const res = await fetchUpstream(url);
     const raw: any = await res.json();

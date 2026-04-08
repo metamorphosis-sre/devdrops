@@ -57,26 +57,30 @@ regulatory.get("/uk/company/:number", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const res = await fetchUpstream(`https://api.company-information.service.gov.uk/company/${number}`, {
-    headers: { Authorization: `Basic ${btoa(c.env.COMPANIES_HOUSE_API_KEY + ":")}` },
-  });
-  const raw: any = await res.json();
+  try {
+    const res = await fetchUpstream(`https://api.company-information.service.gov.uk/company/${number}`, {
+      headers: { Authorization: `Basic ${btoa(c.env.COMPANIES_HOUSE_API_KEY + ":")}` },
+    });
+    const raw: any = await res.json();
 
-  const data = {
-    name: raw.company_name,
-    number: raw.company_number,
-    status: raw.company_status,
-    type: raw.type,
-    incorporated: raw.date_of_creation,
-    dissolved: raw.date_of_cessation,
-    address: raw.registered_office_address,
-    sic_codes: raw.sic_codes,
-    accounts_next_due: raw.accounts?.next_due,
-    confirmation_next_due: raw.confirmation_statement?.next_due,
-  };
+    const data = {
+      name: raw.company_name,
+      number: raw.company_number,
+      status: raw.company_status,
+      type: raw.type,
+      incorporated: raw.date_of_creation,
+      dissolved: raw.date_of_cessation,
+      address: raw.registered_office_address,
+      sic_codes: raw.sic_codes,
+      accounts_next_due: raw.accounts?.next_due,
+      confirmation_next_due: raw.confirmation_statement?.next_due,
+    };
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "Companies House service unavailable" }, 503);
+  }
 });
 
 // GET /api/regulatory/uk/filings/:number — recent filings for a UK company
@@ -89,25 +93,29 @@ regulatory.get("/uk/filings/:number", async (c) => {
   const cached = await getCached(c.env.DB, PRODUCT, cacheKey);
   if (cached) return c.json({ product: PRODUCT, cached: true, data: cached });
 
-  const res = await fetchUpstream(`https://api.company-information.service.gov.uk/company/${number}/filing-history?items_per_page=20`, {
-    headers: { Authorization: `Basic ${btoa(c.env.COMPANIES_HOUSE_API_KEY + ":")}` },
-  });
-  const raw: any = await res.json();
+  try {
+    const res = await fetchUpstream(`https://api.company-information.service.gov.uk/company/${number}/filing-history?items_per_page=20`, {
+      headers: { Authorization: `Basic ${btoa(c.env.COMPANIES_HOUSE_API_KEY + ":")}` },
+    });
+    const raw: any = await res.json();
 
-  const data = {
-    company_number: number,
-    total: raw.total_count,
-    filings: raw.items?.map((f: any) => ({
-      date: f.date,
-      type: f.type,
-      category: f.category,
-      description: f.description,
-      barcode: f.barcode,
-    })),
-  };
+    const data = {
+      company_number: number,
+      total: raw.total_count,
+      filings: raw.items?.map((f: any) => ({
+        date: f.date,
+        type: f.type,
+        category: f.category,
+        description: f.description,
+        barcode: f.barcode,
+      })),
+    };
 
-  await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
-  return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+    await setCache(c.env.DB, PRODUCT, cacheKey, data, CACHE_TTL);
+    return c.json({ product: PRODUCT, cached: false, data, timestamp: new Date().toISOString() });
+  } catch {
+    return c.json({ error: "Companies House filings service unavailable" }, 503);
+  }
 });
 
 async function searchSECEdgar(query: string, forms?: string) {

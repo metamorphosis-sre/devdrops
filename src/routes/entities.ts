@@ -41,7 +41,7 @@ entities.post("/extract", async (c) => {
       timestamp: new Date().toISOString(),
     });
   } catch (e) {
-    return c.json({ error: "Entity extraction failed", detail: String(e) }, 503);
+    return c.json({ error: "Entity extraction failed" }, 503);
   }
 });
 
@@ -68,7 +68,7 @@ async function callClaude(text: string, types: string[], apiKey: string) {
     const responseText = raw.content?.[0]?.text ?? "{}";
     return JSON.parse(responseText);
   } catch (e) {
-    return { error: "AI entity extraction failed", detail: String(e) };
+    return { error: "AI entity extraction failed" };
   }
 }
 

@@ -22,10 +22,26 @@ export async function fetchUpstream(url: string, options?: {
   return res;
 }
 
+// Strip API keys from URLs before including in error messages
+function sanitizeUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    for (const key of u.searchParams.keys()) {
+      if (/key|token|secret|password|auth/i.test(key)) {
+        u.searchParams.set(key, "[REDACTED]");
+      }
+    }
+    return u.toString();
+  } catch {
+    return url.replace(/([?&])(api[_-]?key|apiKey|token|secret|auth)=[^&]+/gi, "$1$2=[REDACTED]");
+  }
+}
+
 export class UpstreamError extends Error {
   constructor(public url: string, public status: number, public body: string) {
-    super(`Upstream ${url} returned ${status}`);
+    super(`Upstream ${sanitizeUrl(url)} returned ${status}`);
     this.name = "UpstreamError";
+    this.url = sanitizeUrl(url);
   }
 }
 

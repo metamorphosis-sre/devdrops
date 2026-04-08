@@ -88,7 +88,8 @@ async function searchUKContracts(query: string) {
 
 async function searchUSContracts(query: string, apiKey?: string) {
   try {
-    const key = apiKey || "DEMO_KEY";
+    if (!apiKey) return { source: "SAM.gov", total: 0, opportunities: [], error: "SAM_GOV_API_KEY not configured" };
+    const key = apiKey;
     const url = `https://api.sam.gov/opportunities/v2/search?api_key=${key}&limit=20&postedFrom=${getDateDaysAgo(30)}&postedTo=${getToday()}${query ? `&title=${encodeURIComponent(query)}` : ""}`;
     const res = await fetchUpstream(url);
     const raw: any = await res.json();
