@@ -9,7 +9,7 @@ routes = [
   { pattern = "devdrops.run/*", zone_name = "devdrops.run" },
   { pattern = "www.devdrops.run/*", zone_name = "devdrops.run" }
 ]
-workers_dev = true
+workers_dev = false
 
 # D1 Database
 [[d1_databases]]
@@ -34,7 +34,7 @@ id = "7973d723cbf349c2874eece54b651d49"
 # Email (send purchase notifications)
 [[send_email]]
 name = "EMAIL"
-destination_address = "pchawla@gmail.com"
+destination_address = "support@devdrops.run"
 
 # Cron Triggers
 [triggers]
