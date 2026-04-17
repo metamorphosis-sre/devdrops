@@ -4,6 +4,13 @@ import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
 // Central pricing map for all DevDrops products.
 // Add new product routes here — the x402 middleware reads this to set per-route prices.
 // Prices are in USD (dollar-prefixed strings required by x402).
+//
+// Canonical product count: 37 pay-per-query products as of 2026-04-17.
+// Counting rule: unique path-prefix products in this map, excluding credit
+// bundles (POST /api/credits/*). GET/POST variants of the same path count as
+// one product (sentiment, research, extract, property/mcp). inference/complete
+// and inference/chat count together as one product ("inference"). README,
+// LANDING_HTML meta, server-card.json, and wiki/STATE.md must match this count.
 export const pricingMap: PricingMap = {
   // Tier 1: Domain Expertise
   "GET /api/property/*": { price: "$0.01", description: "Global property intelligence — planning, prices, zoning" },

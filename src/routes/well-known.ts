@@ -8,7 +8,7 @@ const wellKnown = new Hono<{ Bindings: Env }>();
 wellKnown.get("/mcp/server-card.json", (c) => {
   return c.json({
     serverInfo: { name: "devdrops", version: "1.0.0" },
-    description: "43 pay-per-query data APIs as MCP tools. Weather, FX, stocks, crypto, SEC filings, sanctions, sentiment, research, IP, and more. Pay $0.01 USDC per call via x402 on Base mainnet. Free discovery.",
+    description: "37 pay-per-query data APIs as MCP tools. Weather, FX, stocks, crypto, SEC filings, sanctions, sentiment, research, IP, and more. Pay $0.01 USDC per call via x402 on Base mainnet. Free discovery.",
     authentication: { required: false },
     configSchema: {
       type: "object",
