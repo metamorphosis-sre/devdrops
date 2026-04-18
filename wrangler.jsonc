@@ -29,7 +29,7 @@
   },
   "vars": {
     "FACILITATOR_URL": "https://api.cdp.coinbase.com/platform/v2/x402",
-    "NETWORK": "eip155:8453",
+    "NETWORK": "eip155:84532",
     "ENVIRONMENT": "production",
     "PAY_TO_ADDRESS": "0xc42EAe553c5C2d521d8A0543c265480B380179D2"
   },
@@ -37,7 +37,7 @@
     "production": {
       "vars": {
         "ENVIRONMENT": "production",
-        "NETWORK": "eip155:8453",
+        "NETWORK": "eip155:84532",
         "FACILITATOR_URL": "https://api.cdp.coinbase.com/platform/v2/x402"
       }
     }

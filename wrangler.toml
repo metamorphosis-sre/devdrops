@@ -46,13 +46,13 @@ crons = [
 # Environment variables (non-secret defaults)
 [vars]
 FACILITATOR_URL = "https://api.cdp.coinbase.com/platform/v2/x402"
-NETWORK = "eip155:8453"  # Base mainnet
+NETWORK = "eip155:84532"  # Base Sepolia (testnet) — temporarily for Bazaar seeding
 ENVIRONMENT = "production"
 PAY_TO_ADDRESS = "0xc42EAe553c5C2d521d8A0543c265480B380179D2"
 
 # Production overrides
 [env.production]
-vars = { ENVIRONMENT = "production", NETWORK = "eip155:8453", FACILITATOR_URL = "https://api.cdp.coinbase.com/platform/v2/x402" }
+vars = { ENVIRONMENT = "production", NETWORK = "eip155:84532", FACILITATOR_URL = "https://api.cdp.coinbase.com/platform/v2/x402" }
 
 # Secrets (set via `wrangler secret put`):
 # PAY_TO_ADDRESS          — your USDC receiving wallet address
