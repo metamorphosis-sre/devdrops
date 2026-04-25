@@ -94,8 +94,8 @@ export async function handleMcpSubdomain(c: Context<{ Bindings: Env }>): Promise
     const schemes = [{ network, server: new ExactEvmScheme() }];
     const paymentMiddleware = paymentMiddlewareFromConfig(mcpRoute as any, facilitator, schemes as any);
 
-    // next() runs only after x402 payment is verified
-    return paymentMiddleware(c, async () => {
+    // x402 middleware sets c.res then returns void; c.res getter always returns a Response
+    await paymentMiddleware(c, async () => {
       const headers: Record<string, string> = { Accept: "application/json" };
       for (const key of ["x-402-payment", "x-402-receipt", "authorization"]) {
         const val = c.req.header(key);
@@ -106,13 +106,14 @@ export async function handleMcpSubdomain(c: Context<{ Bindings: Env }>): Promise
         const url = toolUrl(toolName, args);
         const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
         const data = await res.json();
-        return c.json({ jsonrpc: "2.0", id, result: {
+        c.json({ jsonrpc: "2.0", id, result: {
           content: [{ type: "text", text: JSON.stringify(data) }],
         }});
       } catch {
-        return c.json({ jsonrpc: "2.0", id, error: { code: -32000, message: "Tool call failed" } });
+        c.json({ jsonrpc: "2.0", id, error: { code: -32000, message: "Tool call failed" } });
       }
-    }) as Response;
+    });
+    return c.res;
   }
 
   return c.json({ jsonrpc: "2.0", id, error: { code: -32601, message: `Unknown method: ${method}` } });

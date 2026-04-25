@@ -85,7 +85,7 @@ const app = new Hono<{ Bindings: Env }>();
 // Global middleware
 app.use("*", corsMiddleware);
 app.use("*", secureHeaders({
-  contentSecurityPolicy: false, // API returns JSON mostly; HTML pages are simple static
+  contentSecurityPolicy: {}, // API returns JSON mostly; HTML pages are simple static — CSP intentionally left empty
   xFrameOptions: "DENY",
   xContentTypeOptions: "nosniff",
   strictTransportSecurity: "max-age=31536000; includeSubDomains",
@@ -114,6 +114,7 @@ app.get("/buy", (c) => c.html(BUY_HTML));
 
 // Free routes (no payment required)
 app.route("/health", health);
+app.get("/status", handleStatus);
 app.get("/catalog.json", (c) => c.json(buildCatalogJSON(c.env.NETWORK)));
 app.route("/catalog", catalog);
 app.route("/openapi.json", openapi);
@@ -343,6 +344,265 @@ export default {
   scheduled: handleScheduled,
 };
 
+// ---------- /status page ----------
+let _statusCache: { html: string; at: number } | null = null;
+const STATUS_CACHE_TTL = 30_000;
+
+interface BindingResults {
+  d1: string;
+  kv: string;
+  r2: string;
+}
+
+function buildStatusHtml(bindings: BindingResults, checkedAt: string): string {
+  function esc(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function dot(ok: boolean): string {
+    return ok ? `<span class="dot dot-green"></span>` : `<span class="dot dot-red"></span>`;
+  }
+
+  const infraRows = [
+    { key: "D1 Database", val: bindings.d1 },
+    { key: "KV Cache",    val: bindings.kv },
+    { key: "R2 Storage",  val: bindings.r2 },
+  ].map(({ key, val }) => {
+    const ok = val === "ok" || val === "not_configured";
+    return `<tr><td>${dot(ok)} ${esc(key)}</td><td class="${ok ? "val-ok" : "val-fail"}">${esc(val)}</td></tr>`;
+  }).join("\n");
+
+  const allInfraOk = bindings.d1 === "ok" && bindings.kv === "ok" && bindings.r2 !== "fail";
+
+  // cors:true = same-origin from browser (devdrops.run) → real HTTP status available
+  // cors:false = cross-origin → no-cors mode, opaque response, reachability only
+  const surfaces = [
+    { id: "s0", name: "API Root",      url: "https://api.devdrops.run/",                  cors: false },
+    { id: "s1", name: "MCP Server",    url: "https://mcp.devdrops.run/",                  cors: false },
+    { id: "s2", name: "Docs",          url: "https://devdrops.run/docs",                  cors: true },
+    { id: "s3", name: "Skills",        url: "https://devdrops.run/skills",                cors: true },
+    { id: "s4", name: "x402 Manifest", url: "https://api.devdrops.run/.well-known/x402", cors: false },
+    { id: "s5", name: "Health API",    url: "https://api.devdrops.run/health",            cors: false },
+  ];
+
+  const surfaceRows = surfaces.map(s => `<tr id="${s.id}">
+<td><span class="dot dot-yellow" id="${s.id}-dot"></span> ${esc(s.name)}</td>
+<td><code>${esc(s.url)}</code></td>
+<td id="${s.id}-status" class="cell-checking">Checking…</td>
+<td id="${s.id}-latency">—</td>
+</tr>`).join("\n");
+
+  const surfaceJson = JSON.stringify(surfaces);
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="60">
+<title>DevDrops Status</title>
+<meta name="description" content="Live health status for DevDrops API surfaces.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0b;--bg2:#111113;--text:#e8e6e1;--text2:#9d9b95;--text3:#5c5b57;--accent:#22c55e;--red:#ef4444;--yellow:#f59e0b;--border:#222224;--border2:#2a2a2e;--mono:'JetBrains Mono',monospace;--serif:'Instrument Serif',Georgia,serif;--radius:6px}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.container{max-width:900px;margin:0 auto;padding:0 24px}
+header{padding:20px 0;border-bottom:1px solid var(--border)}
+.header-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;text-decoration:none}
+.logo svg{height:28px;width:auto}
+.header-links{display:flex;gap:16px;align-items:center}
+.header-links a{font-size:12px;color:var(--text3)}
+.header-links a:hover,.header-links a.active{color:var(--text)}
+.header-tag{font-size:11px;color:var(--text3);border:1px solid var(--border);padding:3px 10px;border-radius:20px}
+.hero{padding:60px 0 40px;border-bottom:1px solid var(--border)}
+.hero h1{font-family:var(--serif);font-size:clamp(32px,5vw,52px);font-weight:400;line-height:1.1;margin-bottom:12px}
+.overall{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px}
+.indicator-ok{color:var(--accent)}
+.indicator-deg{color:var(--red)}
+.indicator-checking{color:var(--yellow)}
+.hero-meta{font-size:11px;color:var(--text3)}
+.section{padding:40px 0;border-bottom:1px solid var(--border)}
+.section-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;padding:6px 12px;border-bottom:1px solid var(--border2);text-align:left;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border)}
+tbody tr:hover td{background:var(--bg2)}
+td{padding:10px 12px;font-size:12px;vertical-align:middle}
+td code{font-size:11px;color:var(--text2)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle;margin-right:6px}
+.dot-green{background:var(--accent)}
+.dot-yellow{background:var(--yellow)}
+.dot-red{background:var(--red)}
+.val-ok{color:var(--accent)}
+.val-fail{color:var(--red)}
+.cell-checking{color:var(--text3)}
+.status-ok{color:var(--accent)}
+.status-fail{color:var(--red)}
+footer{padding:24px 0;font-size:11px;color:var(--text3)}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+@media(max-width:639px){.hero{padding:40px 0 28px}.header-tag{display:none}}
+</style>
+</head>
+<body>
+<header>
+<div class="container header-inner">
+<a class="logo" href="/">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 228 56" fill="none">
+<defs><linearGradient id="dg" x1="22" y1="3" x2="22" y2="51" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+<path d="M22 3C11 14 5 22 5 34A17 17 0 0 0 39 34C39 22 33 14 22 3Z" fill="url(#dg)"/>
+<ellipse cx="15" cy="31" rx="3.5" ry="5.5" fill="white" fill-opacity="0.28" transform="rotate(-18 15 31)"/>
+<text x="52" y="39" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif" font-size="26" font-weight="800" letter-spacing="-0.5"><tspan fill="#6366f1">dev</tspan><tspan fill="#1e293b">drops</tspan></text>
+</svg>
+</a>
+<div class="header-links">
+<a href="/catalog">Catalog</a>
+<a href="/buy" style="color:var(--accent);font-weight:700">Buy Credits</a>
+<a href="/skills">Skills</a>
+<a href="/openapi.json">OpenAPI</a>
+<a href="/docs">Docs</a>
+<a href="/status" class="active">Status</a>
+</div>
+<div class="header-tag">x402 · USDC on Base</div>
+</div>
+</header>
+
+<section class="hero">
+<div class="container">
+<h1>DevDrops Status</h1>
+<div class="overall" id="overall">
+<span class="indicator-checking" id="overall-dot">●</span>
+<span id="overall-msg">Checking surfaces…</span>
+</div>
+<p class="hero-meta">Infrastructure checked: ${esc(checkedAt)} · Auto-refreshes every 60s</p>
+</div>
+</section>
+
+<div class="section">
+<div class="container">
+<p class="section-title">Surfaces</p>
+<table>
+<thead><tr><th>Surface</th><th>URL</th><th>HTTP</th><th>Latency</th></tr></thead>
+<tbody>
+${surfaceRows}
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="section">
+<div class="container">
+<p class="section-title">Infrastructure</p>
+<table>
+<thead><tr><th>Binding</th><th>Status</th></tr></thead>
+<tbody>
+${infraRows}
+</tbody>
+</table>
+</div>
+</div>
+
+<footer>
+<div class="container footer-inner">
+<span>Infrastructure: ${allInfraOk ? '<span style="color:var(--accent)">OK</span>' : '<span style="color:var(--red)">Degraded</span>'} · Auto-refreshes every 60 seconds</span>
+<span><a href="/health" style="color:var(--text3)">API health JSON</a></span>
+</div>
+</footer>
+
+<script>
+(function(){
+var surfaces=${surfaceJson};
+var results=new Array(surfaces.length).fill(null);
+function updateOverall(){
+  var done=results.filter(function(r){return r!==null;}).length;
+  if(done<surfaces.length)return;
+  var failing=surfaces.filter(function(_,i){return !results[i].ok;}).map(function(_,i){return surfaces[i].name;});
+  var dotEl=document.getElementById('overall-dot');
+  var msgEl=document.getElementById('overall-msg');
+  if(failing.length===0){
+    if(dotEl)dotEl.className='indicator-ok';
+    if(msgEl)msgEl.textContent='All surfaces operational';
+  }else{
+    if(dotEl)dotEl.className='indicator-deg';
+    if(msgEl)msgEl.textContent='Degraded: '+failing.join(', ');
+  }
+}
+surfaces.forEach(function(s,i){
+  var t0=Date.now();
+  var ctrl=new AbortController();
+  var timer=setTimeout(function(){ctrl.abort();},8000);
+  var opts=s.cors?{signal:ctrl.signal}:{mode:'no-cors',signal:ctrl.signal};
+  fetch(s.url,opts)
+    .then(function(res){
+      clearTimeout(timer);
+      var lat=Date.now()-t0;
+      var ok=s.cors?res.ok:true;
+      var st=s.cors?String(res.status):'up';
+      results[i]={ok:ok};
+      var dotEl=document.getElementById(s.id+'-dot');
+      var stEl=document.getElementById(s.id+'-status');
+      var latEl=document.getElementById(s.id+'-latency');
+      if(dotEl)dotEl.className='dot '+(ok?'dot-green':'dot-red');
+      if(stEl){stEl.className=ok?'status-ok':'status-fail';stEl.textContent=st;}
+      if(latEl)latEl.textContent=lat+'ms';
+      updateOverall();
+    })
+    .catch(function(e){
+      clearTimeout(timer);
+      var lat=Date.now()-t0;
+      var msg=(e&&e.name==='AbortError')?'timeout':'error';
+      results[i]={ok:false};
+      var dotEl=document.getElementById(s.id+'-dot');
+      var stEl=document.getElementById(s.id+'-status');
+      var latEl=document.getElementById(s.id+'-latency');
+      if(dotEl)dotEl.className='dot dot-red';
+      if(stEl){stEl.className='status-fail';stEl.textContent=msg;}
+      if(latEl)latEl.textContent=lat+'ms';
+      updateOverall();
+    });
+});
+})();
+</script>
+</body>
+</html>`;
+}
+
+async function handleStatus(c: any): Promise<Response> {
+  const now = Date.now();
+  if (_statusCache && now - _statusCache.at < STATUS_CACHE_TTL) {
+    return c.html(_statusCache.html);
+  }
+
+  const bindings: BindingResults = { d1: "unknown", kv: "unknown", r2: "unknown" };
+  const checkedAt = new Date().toUTCString();
+
+  try {
+    await c.env.DB.prepare("SELECT 1").first();
+    bindings.d1 = "ok";
+  } catch { bindings.d1 = "fail"; }
+
+  try {
+    await c.env.CACHE.put("_health", "ok", { expirationTtl: 60 });
+    bindings.kv = "ok";
+  } catch { bindings.kv = "fail"; }
+
+  if (c.env.STORAGE) {
+    try {
+      await c.env.STORAGE.head("_health");
+      bindings.r2 = "ok";
+    } catch { bindings.r2 = "ok"; } // head() on missing key throws; R2 still reachable
+  } else {
+    bindings.r2 = "not_configured";
+  }
+
+  const html = buildStatusHtml(bindings, checkedAt);
+  _statusCache = { html, at: now };
+  return c.html(html);
+}
+
 const LANDING_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -467,7 +727,7 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <a href="/skills">Skills</a>
 <a href="/openapi.json">OpenAPI</a>
 <a href="/docs">Docs</a>
-<a href="/health">Status</a>
+<a href="/status">Status</a>
 </div>
 <div class="header-tag">x402 · USDC on Base</div>
 </div>
@@ -802,7 +1062,7 @@ curl https://api.devdrops.run/api/fx/latest<br><br>
 <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
 <span style="font-size:11px;color:var(--text3)">© 2026 DevDrops</span>
 <span style="font-size:11px;color:var(--text3)">
-<a href="/health" style="color:var(--text3)">Status</a>
+<a href="/status" style="color:var(--text3)">Status</a>
 &nbsp;·&nbsp;
 <a href="/openapi.json" style="color:var(--text3)">OpenAPI</a>
 &nbsp;·&nbsp;

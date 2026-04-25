@@ -1,5 +1,6 @@
 import type { Env, DataSource } from "../types";
 import { createMimeMessage } from "mimetext";
+import { EmailMessage } from "cloudflare:email";
 
 const MAX_CONSECUTIVE_FAILURES = 3;
 const ALERT_EMAIL = "pchawla@gmail.com";
