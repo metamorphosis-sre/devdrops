@@ -16,7 +16,7 @@ import { UpstreamError } from "./lib/fetch";
 
 // Free routes
 import health from "./routes/health";
-import catalog from "./routes/catalog";
+import catalog, { buildCatalogJSON } from "./routes/catalog";
 import openapi from "./routes/openapi";
 import wellKnown from "./routes/well-known";
 import skills from "./routes/skills";
@@ -114,6 +114,7 @@ app.get("/buy", (c) => c.html(BUY_HTML));
 
 // Free routes (no payment required)
 app.route("/health", health);
+app.get("/catalog.json", (c) => c.json(buildCatalogJSON(c.env.NETWORK)));
 app.route("/catalog", catalog);
 app.route("/openapi.json", openapi);
 app.route("/.well-known", wellKnown);
