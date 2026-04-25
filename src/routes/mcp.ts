@@ -5,7 +5,7 @@ const PROTOCOL_VERSION = "2024-11-05";
 const SERVER_INFO = { name: "devdrops", version: "1.0.0" };
 const BASE = "https://api.devdrops.run";
 
-const TOOLS = [
+export const TOOLS = [
   {
     name: "get_weather",
     description: "Get current weather conditions or forecast for a location",
@@ -207,7 +207,7 @@ const TOOLS = [
   },
 ];
 
-function toolUrl(name: string, args: Record<string, any>): string {
+export function toolUrl(name: string, args: Record<string, any>): string {
   switch (name) {
     case "get_weather": {
       const ep = args.forecast ? "forecast" : "current";

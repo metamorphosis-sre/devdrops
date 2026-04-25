@@ -19,6 +19,7 @@ import health from "./routes/health";
 import catalog from "./routes/catalog";
 import openapi from "./routes/openapi";
 import wellKnown from "./routes/well-known";
+import skills from "./routes/skills";
 
 // Group A: Free APIs (no key needed)
 import fx from "./routes/fx";
@@ -76,6 +77,7 @@ import entities from "./routes/entities";
 import mcp from "./routes/mcp";
 import credits from "./routes/credits";
 import checkout from "./routes/checkout";
+import { handleMcpSubdomain } from "./routes/mcp-subdomain";
 
 
 const app = new Hono<{ Bindings: Env }>();
@@ -93,8 +95,19 @@ app.use("*", secureHeaders({
 // Body size limit — 256KB for all POST requests
 app.use("/api/*", bodyLimit({ maxSize: 256 * 1024 }));
 
+// mcp.devdrops.run subdomain — must run before any route handlers (Hono processes in registration order)
+app.use("*", async (c, next) => {
+  if (c.req.header("Host") === "mcp.devdrops.run") {
+    return handleMcpSubdomain(c);
+  }
+  return next();
+});
+
 // Landing page at root
 app.get("/", (c) => c.html(LANDING_HTML));
+
+// Scalar API docs
+app.get("/docs", (c) => c.html(DOCS_HTML));
 
 // Buy page (credit card checkout)
 app.get("/buy", (c) => c.html(BUY_HTML));
@@ -104,6 +117,7 @@ app.route("/health", health);
 app.route("/catalog", catalog);
 app.route("/openapi.json", openapi);
 app.route("/.well-known", wellKnown);
+app.route("/skills", skills);
 // llms.txt at root for AI assistant discovery
 app.get("/llms.txt", (c) => c.redirect("/.well-known/llms.txt", 301));
 
@@ -449,7 +463,9 @@ footer{padding:24px 0;border-top:1px solid var(--border)}
 <div class="header-links">
 <a href="/catalog">Catalog</a>
 <a href="/buy" style="color:var(--accent);font-weight:700">Buy Credits</a>
+<a href="/skills">Skills</a>
 <a href="/openapi.json">OpenAPI</a>
+<a href="/docs">Docs</a>
 <a href="/health">Status</a>
 </div>
 <div class="header-tag">x402 · USDC on Base</div>
@@ -974,6 +990,26 @@ async function buy(bundle,btn){
 }
 </script>
 
+</body>
+</html>
+`;
+
+const DOCS_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevDrops API Docs</title>
+<meta name="description" content="Interactive API documentation for DevDrops — 43 pay-per-query data APIs powered by x402 micropayments.">
+<style>body{margin:0;padding:0;background:#0a0a0b}</style>
+</head>
+<body>
+<script
+  id="api-reference"
+  data-url="https://api.devdrops.run/openapi.json"
+  data-configuration='{"theme":"purple","darkMode":true,"layout":"modern","defaultHttpClient":{"targetKey":"javascript","clientKey":"fetch"},"servers":[{"url":"https://api.devdrops.run","description":"Production"}]}'
+></script>
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 </body>
 </html>
 `;

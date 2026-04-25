@@ -16,7 +16,7 @@ weather.get("/current", async (c) => {
   const lat = c.req.query("lat");
   const lon = c.req.query("lon");
 
-  if (!city && (!lat || !lon)) return c.json({ error: "Provide 'city' or 'lat'+'lon'" }, 400);
+  if (!city && (!lat || !lon)) return c.json({ error: "Provide ?city=<name> or ?lat=<n>&lon=<n> — and a valid x402 payment if outside free tier", docs: "https://api.devdrops.run/openapi.json" }, 402);
 
   const q = city ? `q=${encodeURIComponent(city)}` : `lat=${lat}&lon=${lon}`;
   const cacheKey = `current:${city ?? `${lat},${lon}`}`;
@@ -58,7 +58,7 @@ weather.get("/forecast", async (c) => {
   const lat = c.req.query("lat");
   const lon = c.req.query("lon");
 
-  if (!city && (!lat || !lon)) return c.json({ error: "Provide 'city' or 'lat'+'lon'" }, 400);
+  if (!city && (!lat || !lon)) return c.json({ error: "Provide ?city=<name> or ?lat=<n>&lon=<n> — and a valid x402 payment if outside free tier", docs: "https://api.devdrops.run/openapi.json" }, 402);
 
   const q = city ? `q=${encodeURIComponent(city)}` : `lat=${lat}&lon=${lon}`;
   const cacheKey = `forecast:${city ?? `${lat},${lon}`}`;

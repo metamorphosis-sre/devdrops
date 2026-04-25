@@ -75,6 +75,315 @@ export const pricingMap: PricingMap = {
   "POST /api/credits/purchase/business": { price: "$100.00", description: "Business credit bundle — 12,000 queries (20% bonus)" },
 };
 
+// Canonical leaf paths advertised in /.well-known/x402.
+// GET wildcard entries map to a specific representative leaf so the manifest
+// advertises paths that return 402, not the stripped parent paths that return 400.
+// POST entries use the exact path (no wildcard problem for POST).
+export const manifestLeafPaths: Record<string, string> = {
+  // GET wildcards — 32 locked leaf paths (AMENDMENT 2, 2026-04-25)
+  "GET /api/property/*":       "/api/property/uk/prices",
+  "GET /api/property/mcp/*":   "/api/property/mcp",
+  "GET /api/predictions/*":    "/api/predictions/markets",
+  "GET /api/odds/*":           "/api/odds/sports",
+  "GET /api/regulatory/*":     "/api/regulatory/search",
+  "GET /api/calendar/*":       "/api/calendar/upcoming",
+  "GET /api/filings/*":        "/api/filings/search",
+  "GET /api/domain/*":         "/api/domain/lookup/:domain",
+  "GET /api/weather/*":        "/api/weather/current",
+  "GET /api/fx/*":             "/api/fx/latest",
+  "GET /api/ip/*":             "/api/ip/me",
+  "GET /api/history/*":        "/api/history/today",
+  "GET /api/papers/*":         "/api/papers/search",
+  "GET /api/food/*":           "/api/food/search",
+  "GET /api/tenders/*":        "/api/tenders/search",
+  "GET /api/sentiment/*":      "/api/sentiment/analyze",
+  "GET /api/signals/*":        "/api/signals/correlate",
+  "GET /api/location/*":       "/api/location/uk/report",
+  "GET /api/research/*":       "/api/research/brief",
+  "GET /api/email-verify/*":   "/api/email-verify/check/:email",
+  "GET /api/qr/*":             "/api/qr/generate",
+  "GET /api/crypto/*":         "/api/crypto/price/bitcoin",
+  "GET /api/time/*":           "/api/time/now",
+  "GET /api/vat/*":            "/api/vat/check/:number",
+  "GET /api/stocks/*":         "/api/stocks/quote/:ticker",
+  "GET /api/extract/*":        "/api/extract/url",
+  "GET /api/sanctions/*":      "/api/sanctions/check",
+  "GET /api/company/*":        "/api/company/search",
+  "GET /api/asn/*":            "/api/asn/ip/:ip",
+  "GET /api/economy/*":        "/api/economy/indicator",
+  "GET /api/utils/*":          "/api/utils/uuid",
+  "GET /api/summarize/*":      "/api/summarize/url",
+  // POST entries — exact paths (strip /* where present)
+  "POST /api/property/mcp":          "/api/property/mcp",
+  "POST /api/sentiment/*":           "/api/sentiment",
+  "POST /api/documents/*":           "/api/documents",
+  "POST /api/research/*":            "/api/research",
+  "POST /api/translate/*":           "/api/translate",
+  "POST /api/extract/*":             "/api/extract",
+  "POST /api/classify/*":            "/api/classify",
+  "POST /api/entities/*":            "/api/entities",
+  "POST /api/image/generate":        "/api/image/generate",
+  "POST /api/inference/complete":    "/api/inference/complete",
+  "POST /api/inference/chat":        "/api/inference/chat",
+  "POST /api/mcp":                   "/api/mcp",
+  "POST /api/credits/purchase/starter":  "/api/credits/purchase/starter",
+  "POST /api/credits/purchase/pro":      "/api/credits/purchase/pro",
+  "POST /api/credits/purchase/business": "/api/credits/purchase/business",
+};
+
+// Bazaar discovery schemas for each advertised endpoint.
+// Populates queryParams and pathParams in the discovery extension so agents know
+// what parameters each endpoint requires before constructing a call.
+// Keys match pricingMap keys exactly.
+const endpointParamSchemas: Record<string, {
+  inputSchema?: Record<string, unknown>;
+  pathParamsSchema?: Record<string, unknown>;
+}> = {
+  "GET /api/property/*": {
+    inputSchema: {
+      type: "object",
+      properties: { postcode: { type: "string", description: "UK postcode (e.g. SW1A 1AA)" } },
+      required: ["postcode"],
+    },
+  },
+  "GET /api/predictions/*": {
+    inputSchema: {
+      type: "object",
+      properties: { limit: { type: "number", description: "Max markets to return (default 20)" } },
+    },
+  },
+  "GET /api/regulatory/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        q:      { type: "string", description: "Search query" },
+        source: { type: "string", description: "Filter by source: all | sec | uk (default all)" },
+      },
+      required: ["q"],
+    },
+  },
+  "GET /api/calendar/*": {
+    inputSchema: {
+      type: "object",
+      properties: { days: { type: "number", description: "Lookahead window in days (default 7)" } },
+    },
+  },
+  "GET /api/filings/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        q:         { type: "string", description: "Full-text search query" },
+        forms:     { type: "string", description: "Comma-separated form types (e.g. 10-K,10-Q)" },
+        dateRange: { type: "string", description: "Date range filter (e.g. 2024-01-01:2024-12-31)" },
+      },
+      required: ["q"],
+    },
+  },
+  "GET /api/domain/*": {
+    pathParamsSchema: {
+      type: "object",
+      properties: { domain: { type: "string", description: "Domain name (e.g. example.com)" } },
+      required: ["domain"],
+    },
+  },
+  "GET /api/weather/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        city: { type: "string", description: "City name (e.g. London)" },
+        lat:  { type: "number", description: "Latitude (use with lon)" },
+        lon:  { type: "number", description: "Longitude (use with lat)" },
+      },
+    },
+  },
+  "GET /api/fx/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        base:    { type: "string", description: "Base currency code (default USD)" },
+        symbols: { type: "string", description: "Comma-separated target currencies (e.g. GBP,EUR)" },
+      },
+    },
+  },
+  "GET /api/history/*": {
+    inputSchema: {
+      type: "object",
+      properties: { type: { type: "string", description: "Event type filter (e.g. births, deaths, events)" } },
+    },
+  },
+  "GET /api/papers/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        q:        { type: "string", description: "Search query" },
+        page:     { type: "number", description: "Page number (default 1)" },
+        per_page: { type: "number", description: "Results per page (default 10, max 50)" },
+      },
+      required: ["q"],
+    },
+  },
+  "GET /api/food/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        q:    { type: "string", description: "Food or product name to search" },
+        page: { type: "number", description: "Page number (default 1)" },
+      },
+      required: ["q"],
+    },
+  },
+  "GET /api/tenders/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        q:       { type: "string", description: "Keyword search query" },
+        country: { type: "string", description: "ISO 2-letter country code filter" },
+      },
+      required: ["q"],
+    },
+  },
+  "GET /api/sentiment/*": {
+    inputSchema: {
+      type: "object",
+      properties: { topic: { type: "string", description: "Topic or entity to analyse (e.g. Tesla stock)" } },
+      required: ["topic"],
+    },
+  },
+  "GET /api/signals/*": {
+    inputSchema: {
+      type: "object",
+      properties: { market: { type: "string", description: "Market identifier (e.g. BTC-USD, AAPL)" } },
+      required: ["market"],
+    },
+  },
+  "GET /api/location/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        postcode: { type: "string", description: "UK postcode (e.g. SW1A 1AA)" },
+        lat:      { type: "number", description: "Latitude (use with lng)" },
+        lng:      { type: "number", description: "Longitude (use with lat)" },
+      },
+    },
+  },
+  "GET /api/research/*": {
+    inputSchema: {
+      type: "object",
+      properties: { topic: { type: "string", description: "Research topic to generate a brief on" } },
+      required: ["topic"],
+    },
+  },
+  "GET /api/email-verify/*": {
+    pathParamsSchema: {
+      type: "object",
+      properties: { email: { type: "string", description: "Email address to verify" } },
+      required: ["email"],
+    },
+  },
+  "GET /api/qr/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        data:   { type: "string", description: "Content to encode (URL, text, etc.)" },
+        format: { type: "string", description: "Output format: svg | png | json (default svg)" },
+        size:   { type: "number", description: "Image size in pixels (50–1000, default 200)" },
+        error:  { type: "string", description: "Error correction level: L | M | Q | H (default M)" },
+      },
+      required: ["data"],
+    },
+  },
+  "GET /api/crypto/*": {
+    pathParamsSchema: {
+      type: "object",
+      properties: { symbol: { type: "string", description: "Token symbol or ID (e.g. bitcoin, ethereum)" } },
+      required: ["symbol"],
+    },
+  },
+  "GET /api/time/*": {
+    inputSchema: {
+      type: "object",
+      properties: { timezone: { type: "string", description: "IANA timezone (e.g. Europe/London). Alias: tz" } },
+    },
+  },
+  "GET /api/vat/*": {
+    pathParamsSchema: {
+      type: "object",
+      properties: { number: { type: "string", description: "VAT number with country prefix (e.g. GB123456789)" } },
+      required: ["number"],
+    },
+  },
+  "GET /api/stocks/*": {
+    pathParamsSchema: {
+      type: "object",
+      properties: { ticker: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA)" } },
+      required: ["ticker"],
+    },
+  },
+  "GET /api/extract/*": {
+    inputSchema: {
+      type: "object",
+      properties: { url: { type: "string", description: "Full URL to extract content from" } },
+      required: ["url"],
+    },
+  },
+  "GET /api/sanctions/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        name:      { type: "string", description: "Person or entity name to screen" },
+        threshold: { type: "number", description: "Fuzzy match threshold 0–1 (default 0.8)" },
+      },
+      required: ["name"],
+    },
+  },
+  "GET /api/company/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        q:       { type: "string", description: "Company name or number to search" },
+        country: { type: "string", description: "ISO 2-letter country code (default GB)" },
+      },
+      required: ["q"],
+    },
+  },
+  "GET /api/asn/*": {
+    pathParamsSchema: {
+      type: "object",
+      properties: { ip: { type: "string", description: "IP address to look up (e.g. 1.1.1.1)" } },
+      required: ["ip"],
+    },
+  },
+  "GET /api/economy/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        country:   { type: "string", description: "ISO 2-letter country code (e.g. GB)" },
+        indicator: { type: "string", description: "World Bank indicator code (e.g. NY.GDP.MKTP.CD)" },
+        years:     { type: "number", description: "Number of years of history (default 10)" },
+      },
+    },
+  },
+  "GET /api/utils/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        count:   { type: "number", description: "Number of UUIDs to generate (default 1)" },
+        version: { type: "string", description: "UUID version: v4 | v7 (default v4)" },
+      },
+    },
+  },
+  "GET /api/summarize/*": {
+    inputSchema: {
+      type: "object",
+      properties: {
+        url:    { type: "string", description: "Full URL of the web page to summarize" },
+        length: { type: "string", description: "Summary length: short | medium | long (default medium)" },
+      },
+      required: ["url"],
+    },
+  },
+};
+
 // Build the x402 routes config from the pricing map.
 // Each route gets bazaar discovery extensions so it appears in CDP's Bazaar discovery index.
 export function buildX402Routes(payTo: string, network: string) {
@@ -89,9 +398,10 @@ export function buildX402Routes(payTo: string, network: string) {
     const [method] = route.split(" ");
     const isPost = method === "POST";
 
+    const schema = endpointParamSchemas[route] ?? {};
     const extensions = isPost
-      ? declareDiscoveryExtension({ bodyType: "json" })
-      : declareDiscoveryExtension({});
+      ? declareDiscoveryExtension({ bodyType: "json", ...schema })
+      : declareDiscoveryExtension({ ...schema });
 
     routes[route] = {
       accepts: {

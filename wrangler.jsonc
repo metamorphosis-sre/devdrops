@@ -10,6 +10,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "routes": [
     { "pattern": "api.devdrops.run", "custom_domain": true },
+    { "pattern": "mcp.devdrops.run", "custom_domain": true },
     { "pattern": "devdrops.run/*", "zone_name": "devdrops.run" },
     { "pattern": "www.devdrops.run/*", "zone_name": "devdrops.run" }
   ],

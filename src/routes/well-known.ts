@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Env } from "../types";
-import { pricingMap } from "../middleware/payment";
+import { pricingMap, manifestLeafPaths } from "../middleware/payment";
 
 const wellKnown = new Hono<{ Bindings: Env }>();
 
@@ -240,11 +240,12 @@ wellKnown.get("/mcp/server-card.json", (c) => {
 wellKnown.get("/x402", (c) => {
   const baseUrl = "https://api.devdrops.run";
 
-  // Build endpoint list from the live pricing map
+  // Build endpoint list using locked leaf paths (not wildcard-stripped parent paths).
+  // manifestLeafPaths maps each pricingMap key to its canonical advertised path.
   const endpoints = Object.entries(pricingMap).map(([route, config]) => {
-    const [method, path] = route.split(" ");
+    const [method] = route.split(" ");
     return {
-      path: path.replace("/*", ""),
+      path: manifestLeafPaths[route],
       methods: [method],
       price: config.price.replace("$", ""),
       currency: "USDC",

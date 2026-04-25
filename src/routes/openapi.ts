@@ -22,7 +22,6 @@ const SPEC = {
   },
   servers: [
     { url: "https://api.devdrops.run", description: "Production" },
-    { url: "https://devdrops-api.pchawla.workers.dev", description: "Staging" },
   ],
   tags: [
     { name: "FX", description: "Currency exchange rates (ECB / Frankfurter)" },

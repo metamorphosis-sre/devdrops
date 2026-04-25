@@ -9,7 +9,7 @@ const qr = new Hono<{ Bindings: Env }>();
 // Proxies to qrserver.com — free, no key, proven QR generation
 qr.get("/generate", async (c) => {
   const data = c.req.query("data");
-  if (!data) return c.json({ error: "Missing 'data' query param (the content to encode)" }, 400);
+  if (!data) return c.json({ error: "Provide ?data=<content> — and a valid x402 payment if outside free tier", docs: "https://api.devdrops.run/openapi.json" }, 402);
   if (data.length > 2048) return c.json({ error: "Data too long (maximum 2048 characters)" }, 400);
 
   const size = Math.min(Math.max(parseInt(c.req.query("size") ?? "200"), 50), 1000);
