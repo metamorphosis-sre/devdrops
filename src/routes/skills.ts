@@ -114,7 +114,7 @@ footer{padding:24px 0;border-top:1px solid var(--border);font-size:12px;color:va
 <a href="/skills" style="color:var(--text)">Skills</a>
 <a href="/openapi.json">OpenAPI</a>
 <a href="/docs">Docs</a>
-<a href="/health">Status</a>
+<a href="/status">Status</a>
 </div>
 <div class="header-tag">x402 · USDC on Base</div>
 </div>
@@ -221,7 +221,7 @@ footer{padding:24px 0;border-top:1px solid var(--border);font-size:12px;color:va
 <a href="/skills">Skills</a>
 <a href="/openapi.json">OpenAPI</a>
 <a href="/docs">Docs</a>
-<a href="/health">Status</a>
+<a href="/status">Status</a>
 </div>
 </div>
 </header>

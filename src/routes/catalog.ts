@@ -336,7 +336,7 @@ table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
 <a href="/skills">Skills</a>
 <a href="/openapi.json">OpenAPI</a>
 <a href="/docs">Docs</a>
-<a href="/health">Status</a>
+<a href="/status">Status</a>
 </div>
 <div class="header-tag">x402 · USDC on Base</div>
 </div>
