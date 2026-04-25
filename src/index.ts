@@ -373,15 +373,16 @@ function buildStatusHtml(bindings: BindingResults, checkedAt: string): string {
 
   const allInfraOk = bindings.d1 === "ok" && bindings.kv === "ok" && bindings.r2 !== "fail";
 
-  // cors:true = same-origin from browser (devdrops.run) → real HTTP status available
-  // cors:false = cross-origin → no-cors mode, opaque response, reachability only
+  // All surfaces return Access-Control-Allow-Origin: * — use standard CORS fetch.
+  // no-cors was previously used for cross-origin surfaces but Cross-Origin-Resource-Policy: same-origin
+  // (set by secureHeaders) blocks no-cors requests, causing fast TypeErrors in the browser.
   const surfaces = [
-    { id: "s0", name: "API Root",      url: "https://api.devdrops.run/",                  cors: false },
-    { id: "s1", name: "MCP Server",    url: "https://mcp.devdrops.run/",                  cors: false },
-    { id: "s2", name: "Docs",          url: "https://devdrops.run/docs",                  cors: true },
-    { id: "s3", name: "Skills",        url: "https://devdrops.run/skills",                cors: true },
-    { id: "s4", name: "x402 Manifest", url: "https://api.devdrops.run/.well-known/x402", cors: false },
-    { id: "s5", name: "Health API",    url: "https://api.devdrops.run/health",            cors: false },
+    { id: "s0", name: "API Root",      url: "https://api.devdrops.run/" },
+    { id: "s1", name: "MCP Server",    url: "https://mcp.devdrops.run/" },
+    { id: "s2", name: "Docs",          url: "https://devdrops.run/docs" },
+    { id: "s3", name: "Skills",        url: "https://devdrops.run/skills" },
+    { id: "s4", name: "x402 Manifest", url: "https://api.devdrops.run/.well-known/x402" },
+    { id: "s5", name: "Health API",    url: "https://api.devdrops.run/health" },
   ];
 
   const surfaceRows = surfaces.map(s => `<tr id="${s.id}">
@@ -519,7 +520,8 @@ var results=new Array(surfaces.length).fill(null);
 function updateOverall(){
   var done=results.filter(function(r){return r!==null;}).length;
   if(done<surfaces.length)return;
-  var failing=surfaces.filter(function(_,i){return !results[i].ok;}).map(function(_,i){return surfaces[i].name;});
+  var failing=[];
+  surfaces.forEach(function(s,i){if(!results[i].ok)failing.push(s.name);});
   var dotEl=document.getElementById('overall-dot');
   var msgEl=document.getElementById('overall-msg');
   if(failing.length===0){
@@ -534,19 +536,17 @@ surfaces.forEach(function(s,i){
   var t0=Date.now();
   var ctrl=new AbortController();
   var timer=setTimeout(function(){ctrl.abort();},8000);
-  var opts=s.cors?{signal:ctrl.signal}:{mode:'no-cors',signal:ctrl.signal};
-  fetch(s.url,opts)
+  fetch(s.url,{signal:ctrl.signal})
     .then(function(res){
       clearTimeout(timer);
       var lat=Date.now()-t0;
-      var ok=s.cors?res.ok:true;
-      var st=s.cors?String(res.status):'up';
+      var ok=res.ok;
       results[i]={ok:ok};
       var dotEl=document.getElementById(s.id+'-dot');
       var stEl=document.getElementById(s.id+'-status');
       var latEl=document.getElementById(s.id+'-latency');
       if(dotEl)dotEl.className='dot '+(ok?'dot-green':'dot-red');
-      if(stEl){stEl.className=ok?'status-ok':'status-fail';stEl.textContent=st;}
+      if(stEl){stEl.className=ok?'status-ok':'status-fail';stEl.textContent=String(res.status);}
       if(latEl)latEl.textContent=lat+'ms';
       updateOverall();
     })
