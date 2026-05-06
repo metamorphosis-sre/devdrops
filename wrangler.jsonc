@@ -18,6 +18,9 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "devdrops", "database_id": "dc92b44a-7d5e-46f1-b7cc-865328f8d42e" }
   ],
+  "r2_buckets": [
+    { "binding": "STORAGE", "bucket_name": "devdrops-backups" }
+  ],
   "ai": { "binding": "AI" },
   "kv_namespaces": [
     { "binding": "CACHE", "id": "7973d723cbf349c2874eece54b651d49" }

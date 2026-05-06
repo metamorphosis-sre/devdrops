@@ -17,10 +17,10 @@ binding = "DB"
 database_name = "devdrops"
 database_id = "dc92b44a-7d5e-46f1-b7cc-865328f8d42e"
 
-# R2 Bucket (backups + document storage) — uncomment once R2 is enabled in Cloudflare dashboard
-# [[r2_buckets]]
-# binding = "STORAGE"
-# bucket_name = "devdrops-backups"
+# R2 Bucket (nightly D1 backups; non-destructive object writes only)
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "devdrops-backups"
 
 # Cloudflare Workers AI
 [ai]
