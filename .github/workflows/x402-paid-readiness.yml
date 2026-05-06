@@ -1,0 +1,30 @@
+name: x402 Paid Smoke Readiness
+
+on:
+  workflow_dispatch:
+
+jobs:
+  readiness:
+    name: Check paid smoke prerequisites only
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Check funded smoke wallet secret presence without printing value
+        run: |
+          if [ -z "$X402_SMOKE_PRIVATE_KEY" ]; then
+            echo "X402_SMOKE_PRIVATE_KEY=missing" >> "$GITHUB_STEP_SUMMARY"
+            echo "Missing required secret: X402_SMOKE_PRIVATE_KEY"
+            exit 1
+          fi
+          echo "X402_SMOKE_PRIVATE_KEY=present" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          X402_SMOKE_PRIVATE_KEY: ${{ secrets.X402_SMOKE_PRIVATE_KEY }}
+      - name: Check public discovery surfaces only
+        run: |
+          curl -fsS https://api.devdrops.run/catalog >/tmp/catalog.json
+          curl -fsS https://api.devdrops.run/.well-known/x402 >/tmp/x402.json
+          node -e 'const c=require("/tmp/catalog.json"); if(c.product_count!==43) process.exit(1); console.log("catalog_count=43")'
+          echo "No paid transaction was run by this readiness workflow."
