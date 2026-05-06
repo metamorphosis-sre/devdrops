@@ -2,10 +2,15 @@ name: R2 Backup Readiness
 
 on:
   workflow_dispatch:
+    inputs:
+      create_if_missing:
+        description: Create devdrops-backups if it is missing
+        required: false
+        default: "true"
 
 jobs:
   r2-readiness:
-    name: Check R2 bucket availability
+    name: Check or create R2 backup bucket
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,16 +19,45 @@ jobs:
           node-version: "24"
           cache: "npm"
       - run: npm ci
-      - name: List R2 buckets
-        run: npx wrangler r2 bucket list
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      - name: Check expected backup bucket
+      - name: Validate Cloudflare token
         run: |
-          if npx wrangler r2 bucket list | grep -q "devdrops-backups"; then
-            echo "DEVDROPS_R2_BACKUP_BUCKET=present" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "DEVDROPS_R2_BACKUP_BUCKET=missing" >> "$GITHUB_STEP_SUMMARY"
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "Missing required secret: CLOUDFLARE_API_TOKEN"
+            exit 1
           fi
+          echo "CLOUDFLARE_API_TOKEN: present"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Check/create expected backup bucket
+        run: |
+          set -euo pipefail
+          bucket="devdrops-backups"
+          echo "Listing R2 buckets..."
+          npx wrangler r2 bucket list | tee /tmp/r2-buckets.txt
+          if grep -q "name:           ${bucket}" /tmp/r2-buckets.txt; then
+            echo "DEVDROPS_R2_BACKUP_BUCKET=present" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "DEVDROPS_R2_BACKUP_BUCKET=missing" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${CREATE_IF_MISSING}" != "true" ]; then
+            echo "Creation disabled by workflow input."
+            exit 0
+          fi
+          echo "Creating ${bucket}..."
+          npx wrangler r2 bucket create "${bucket}"
+          npx wrangler r2 bucket list | tee /tmp/r2-buckets-after.txt
+          grep -q "name:           ${bucket}" /tmp/r2-buckets-after.txt
+          echo "DEVDROPS_R2_BACKUP_BUCKET=created" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CREATE_IF_MISSING: ${{ github.event.inputs.create_if_missing }}
+      - name: Verify config binding status
+        run: |
+          if grep -q 'binding.*STORAGE' wrangler.jsonc wrangler.toml && grep -q 'devdrops-backups' wrangler.jsonc wrangler.toml; then
+            echo "CONFIG_STORAGE_BINDING=present" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "CONFIG_STORAGE_BINDING=missing" >> "$GITHUB_STEP_SUMMARY"
+            echo "Bucket may exist, but Worker backup is not active until STORAGE binding is committed and deployed."
+          fi
+      - name: Production health check
+        run: curl -sS https://api.devdrops.run/health
