@@ -1,16 +1,27 @@
 # DevDrops — Current State
 
-> Last updated: 2026-04-07
+> Last updated: 2026-05-06
 
 ---
 
 ## Summary
 
-DevDrops launched with 25 planned modules. After research and viability checks, **30 are live** and **3 were dropped**. All 30 live modules return HTTP 402 with a USDC price on Base mainnet, verified working.
+DevDrops launched from an earlier 25/30-module plan. The current production catalog reports **43 products/endpoints** and is now the source of truth. Live metadata surfaces are:
+
+- `/catalog` — 43 products
+- `/openapi.json` — OpenAPI 3.1 with 43-product positioning
+- `/.well-known/x402` — x402 discovery manifest
+- `/.well-known/mcp.json` and `/.well-known/mcp/server-card.json` — MCP discovery
+
+Older 25/30 wording is superseded by the current catalog and the production audit docs.
 
 ---
 
-## Live Modules (30)
+## Live Modules
+
+See `docs/devdrops-endpoint-matrix.md` for the current 43-product matrix.
+
+## Original 30-Module Baseline
 
 ### Tier 1 — Domain Expertise
 

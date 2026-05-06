@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { Env } from "../types";
+import { getBackupReadiness } from "../cron/backup";
 
 const health = new Hono<{ Bindings: Env }>();
 
@@ -42,6 +43,7 @@ health.get("/", async (c) => {
     {
       status: allOk ? "healthy" : "degraded",
       checks,
+      backup: getBackupReadiness(c.env),
       environment: c.env.ENVIRONMENT,
       latency_ms: Date.now() - start,
       timestamp: new Date().toISOString(),

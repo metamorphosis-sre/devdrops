@@ -1,12 +1,12 @@
 # DevDrops — Project Wiki
 
-> Last updated: 2026-04-06
+> Last updated: 2026-05-06
 
 ---
 
 ## Overview
 
-**DevDrops** (`devdrops.run`) is a suite of 22 pay-per-query data APIs powered by the x402 micropayment protocol. AI agents and developers send a standard HTTP request, receive an HTTP 402 response with a USDC price, pay on Base (Coinbase's L2), and instantly receive structured JSON data. No API keys, no subscriptions, no accounts.
+**DevDrops** (`devdrops.run`) is a suite of 43 pay-per-query products/endpoints powered by the x402 micropayment protocol. AI agents and developers send a standard HTTP request, receive an HTTP 402 response with a USDC price, pay on Base (Coinbase's L2), and instantly receive structured JSON data. No API keys, no subscriptions, no accounts.
 
 **Landing page:** https://devdrops.run  
 **API base:** https://api.devdrops.run  
@@ -62,7 +62,7 @@ src/
 │   ├── catalog.ts        — GET /catalog — machine-readable product list
 │   ├── openapi.ts        — GET /openapi.json — OpenAPI 3.1 spec
 │   ├── well-known.ts     — GET /.well-known/x402 — agent discovery manifest
-│   └── [22 product routers]
+│   └── [43 advertised products/endpoints across the mounted route modules]
 ├── cron/
 │   ├── handler.ts        — Scheduled event dispatcher
 │   ├── health-check.ts   — Pings all data_sources, auto-failover on 3 failures
@@ -91,7 +91,17 @@ src/
 
 ---
 
-## Products (22 — all live)
+## Products
+
+The current live source of truth is the machine-readable catalog:
+
+- `https://api.devdrops.run/catalog`
+- `https://api.devdrops.run/openapi.json`
+- `https://api.devdrops.run/.well-known/x402`
+
+As of 2026-05-06 the catalog reports **43 products/endpoints**. Older 22/25/30 references are superseded by the catalog and the production audit docs.
+
+## Original 22-Product Launch Set
 
 ### Tier 1 — Domain Expertise
 

@@ -41,7 +41,8 @@ describe("landing + free routes", () => {
     expect(res.status).toBe(200);
     const json = (await res.json()) as any;
     expect(Array.isArray(json.products)).toBe(true);
-    expect(json.products.length).toBeGreaterThanOrEqual(25);
+    expect(json.product_count).toBe(43);
+    expect(json.products.length).toBe(43);
     const first = json.products[0];
     expect(first).toHaveProperty("endpoint");
     expect(first).toHaveProperty("price");
