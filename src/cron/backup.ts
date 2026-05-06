@@ -3,10 +3,20 @@ import type { Env } from "../types";
 const TABLES = ["transactions", "abandoned_402s", "health_log", "data_sources", "product_cache"];
 const RETENTION_DAYS = 90;
 
+export function getBackupReadiness(env: Env) {
+  return {
+    configured: Boolean(env.STORAGE),
+    status: env.STORAGE ? "ready" : "skipped",
+    reason: env.STORAGE ? null : "R2 binding STORAGE is not configured; nightly backup cron exits without writing.",
+    retention_days: RETENTION_DAYS,
+    tables: TABLES,
+  };
+}
+
 export async function runBackup(env: Env) {
   const storage = env.STORAGE;
   if (!storage) {
-    console.log("Backup skipped: R2 bucket not configured yet");
+    console.log(getBackupReadiness(env).reason);
     return;
   }
 

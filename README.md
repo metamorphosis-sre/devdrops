@@ -7,7 +7,7 @@ Pay-per-query data APIs for AI agents. No accounts, no API keys, no subscription
 **Docs:** https://api.devdrops.run/openapi.json  
 **Catalog:** https://api.devdrops.run/catalog
 
-25 production endpoints serving prediction markets, sports odds, financial data, regulatory filings, weather, FX rates, crypto prices, QR codes, timezones, AI sentiment, and more — all paid via x402 micropayments on Base mainnet.
+43 production products/endpoints serving prediction markets, sports odds, financial data, regulatory filings, weather, FX rates, crypto prices, QR codes, timezones, utility wrappers, MCP tools, AI sentiment, and more — paid via x402 micropayments on Base mainnet, with a small free tier on selected utility endpoints.
 
 ## Quick start
 
@@ -42,11 +42,17 @@ See https://devdrops.run for more examples.
 
 - Project wiki: `wiki/PROJECT.md`
 - Current state: `wiki/STATE.md`
+- Production audit: `docs/devdrops-production-audit.md`
+- Endpoint matrix: `docs/devdrops-endpoint-matrix.md`
+- Distribution checklist: `docs/devdrops-distribution-checklist.md`
 
 ## Deploy
 
 ```bash
 npm install
+npm run typecheck
+npm test
+npm run smoke:metadata
 npx wrangler deploy
 ```
 
